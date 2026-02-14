@@ -14,3 +14,7 @@ running server
 ```
 uv run uvicorn server:app --reload
 ```
+running a script (uses project venv and deps)
+```
+uv run python whoop_test.py
+```
