@@ -3,6 +3,7 @@ name = "treehacks"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "python-dotenv>=1.0.0",
     "fastapi>=0.129.0",
     "requests>=2.32.5",
     "uvicorn>=0.40.0",

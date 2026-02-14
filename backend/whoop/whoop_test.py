@@ -5,9 +5,14 @@ import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlencode, urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
+from dotenv import load_dotenv
 
-CLIENT_ID = os.environ.get("WHOOP_CLIENT_ID", "32420dc8-1bb2-45d3-a2e4-a2d539262a4d")
-CLIENT_SECRET = os.environ.get("WHOOP_CLIENT_SECRET", "597f890e38add4fb9aa9e2a4cc54455da460e85751172f40840fe1d33c3a16c9")
+load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]
+CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
 REFRESH_TOKEN = os.environ.get("WHOOP_REFRESH_TOKEN")
 
 AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
