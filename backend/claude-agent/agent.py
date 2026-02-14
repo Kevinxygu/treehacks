@@ -5,13 +5,12 @@ A caring AI assistant for elderly people, powered by Claude Agent SDK.
 Connects to multiple MCP servers for medicine tracking, appointments,
 groceries, weather, email, calendar, and more.
 
+All MCP servers are Python-based (run via uvx/uv) or use npx for
+community servers. Node.js is only needed as a runtime for some
+MCP servers distributed via npm.
+
 Usage:
     uv run python agent.py
-
-Requires:
-    - ANTHROPIC_API_KEY and MONGODB_CONNECTION_STRING env vars in .env
-    - Node.js installed (for stdio MCP servers)
-    - Optional: Google Calendar/Gmail MCP servers built (run setup_mcps.sh)
 """
 
 import asyncio
@@ -37,10 +36,18 @@ MCP_SERVERS_DIR = SCRIPT_DIR / "mcp-servers"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MONGODB_CONNECTION_STRING = os.environ.get("MONGODB_CONNECTION_STRING", "")
 
-# Optional
+# Optional - Cal.com
 CAL_API_KEY = os.environ.get("CAL_API_KEY", "")
-GOOGLE_CALENDAR_ACCESS_TOKEN = os.environ.get("GOOGLE_CALENDAR_ACCESS_TOKEN", "")
-GMAIL_ACCESS_TOKEN = os.environ.get("GMAIL_ACCESS_TOKEN", "")
+
+# Optional - Google Calendar (Service Account)
+GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+GOOGLE_CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "")
+
+# Optional - Gmail (App Password via IMAP/SMTP)
+GMAIL_EMAIL = os.environ.get("GMAIL_EMAIL", "")
+GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
+
+# Optional - Other
 INSTACART_API_KEY = os.environ.get("INSTACART_API_KEY", "")
 NOAA_API_TOKEN = os.environ.get("NOAA_API_TOKEN", "")
 
@@ -162,39 +169,50 @@ def build_mcp_servers() -> dict:
     else:
         print("  [-] Cal.com MCP - SKIPPED (set CAL_API_KEY)")
 
-    # --- Google Calendar MCP ---
-    gcal_build = MCP_SERVERS_DIR / "gcal" / "build" / "index.js"
-    if GOOGLE_CALENDAR_ACCESS_TOKEN and gcal_build.exists():
+    # --- Google Calendar MCP (Python, via uvx) ---
+    if GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CALENDAR_ID:
         servers["google-calendar"] = {
-            "command": "node",
-            "args": [str(gcal_build)],
-            "env": {"GOOGLE_ACCESS_TOKEN": GOOGLE_CALENDAR_ACCESS_TOKEN},
+            "command": "uvx",
+            "args": ["google-calendar-mcp@latest"],
+            "env": {
+                "GOOGLE_APPLICATION_CREDENTIALS": GOOGLE_APPLICATION_CREDENTIALS,
+                "GOOGLE_CALENDAR_ID": GOOGLE_CALENDAR_ID,
+            },
         }
         allowed.append("mcp__google-calendar__*")
         print("  [+] Google Calendar MCP (reminders, schedule)")
     else:
         reasons = []
-        if not GOOGLE_CALENDAR_ACCESS_TOKEN:
-            reasons.append("set GOOGLE_CALENDAR_ACCESS_TOKEN")
-        if not gcal_build.exists():
-            reasons.append("run setup_mcps.sh")
+        if not GOOGLE_APPLICATION_CREDENTIALS:
+            reasons.append("set GOOGLE_APPLICATION_CREDENTIALS")
+        if not GOOGLE_CALENDAR_ID:
+            reasons.append("set GOOGLE_CALENDAR_ID")
         print(f"  [-] Google Calendar MCP - SKIPPED ({', '.join(reasons)})")
 
-    # --- Gmail MCP ---
-    gmail_build = MCP_SERVERS_DIR / "gmail" / "build" / "index.js"
-    if GMAIL_ACCESS_TOKEN and gmail_build.exists():
+    # --- Gmail MCP (Python, via uv run) ---
+    gmail_server = MCP_SERVERS_DIR / "gmail" / "src" / "email_client" / "server.py"
+    gmail_python = MCP_SERVERS_DIR / "gmail" / ".venv" / "bin" / "python"
+    if GMAIL_EMAIL and GMAIL_PASSWORD and gmail_server.exists():
         servers["gmail"] = {
-            "command": "node",
-            "args": [str(gmail_build)],
-            "env": {"GOOGLE_ACCESS_TOKEN": GMAIL_ACCESS_TOKEN},
+            "command": str(gmail_python),
+            "args": [str(gmail_server)],
+            "env": {
+                "GMAIL_EMAIL": GMAIL_EMAIL,
+                "GMAIL_PASSWORD": GMAIL_PASSWORD,
+                "GMAIL_IMAP_SERVER": "imap.gmail.com",
+                "GMAIL_SMTP_SERVER": "smtp.gmail.com",
+                "GMAIL_SMTP_PORT": "587",
+            },
         }
         allowed.append("mcp__gmail__*")
         print("  [+] Gmail MCP (send/read emails)")
     else:
         reasons = []
-        if not GMAIL_ACCESS_TOKEN:
-            reasons.append("set GMAIL_ACCESS_TOKEN")
-        if not gmail_build.exists():
+        if not GMAIL_EMAIL:
+            reasons.append("set GMAIL_EMAIL")
+        if not GMAIL_PASSWORD:
+            reasons.append("set GMAIL_PASSWORD")
+        if not gmail_server.exists():
             reasons.append("run setup_mcps.sh")
         print(f"  [-] Gmail MCP - SKIPPED ({', '.join(reasons)})")
 

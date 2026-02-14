@@ -1,61 +1,49 @@
 #!/usr/bin/env bash
 set -e
 
-# Setup script for MCP servers that need local installation
-# (Google Calendar and Gmail MCP servers require clone + build)
+# Setup script for MCP servers that need local installation.
+# Google Calendar MCP is on PyPI (no clone needed).
+# Gmail MCP needs a clone (Python, uses uv).
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MCP_DIR="$SCRIPT_DIR/mcp-servers"
 
 mkdir -p "$MCP_DIR"
 
-echo "=== Setting up Google Calendar MCP Server ==="
-if [ ! -d "$MCP_DIR/gcal" ]; then
-    git clone https://github.com/highlight-ing/google-calendar-mcp-server.git "$MCP_DIR/gcal"
-    cd "$MCP_DIR/gcal"
-    npm install
-    npm run build
-    echo "Google Calendar MCP server built successfully."
-else
-    echo "Google Calendar MCP server already exists, skipping clone."
-    cd "$MCP_DIR/gcal"
-    npm install
-    npm run build
-fi
-
-echo ""
-echo "=== Setting up Gmail MCP Server ==="
+echo "=== Setting up Gmail MCP Server (Python) ==="
 if [ ! -d "$MCP_DIR/gmail" ]; then
-    git clone https://github.com/highlight-ing/gmail-mcp-server.git "$MCP_DIR/gmail"
+    git clone https://github.com/david-strejc/gmail-mcp-server.git "$MCP_DIR/gmail"
     cd "$MCP_DIR/gmail"
-    npm install
-    npm run build
-    echo "Gmail MCP server built successfully."
+    uv venv
+    uv sync
+    echo "Gmail MCP server installed successfully."
 else
-    echo "Gmail MCP server already exists, skipping clone."
+    echo "Gmail MCP server already exists, updating deps..."
     cd "$MCP_DIR/gmail"
-    npm install
-    npm run build
+    uv sync
 fi
 
 echo ""
-echo "=== MCP Server Setup Complete ==="
+echo "=== Google Calendar MCP ==="
+echo "No clone needed! Runs via: uvx google-calendar-mcp@latest"
 echo ""
-echo "Next steps for Google OAuth:"
+echo "=== Setup Complete ==="
+echo ""
+echo "--- Gmail Setup ---"
+echo "1. Go to https://myaccount.google.com/apppasswords"
+echo "   (You need 2FA enabled on your Google account)"
+echo "2. Create an App Password for 'Mail'"
+echo "3. Add to .env:"
+echo "   GMAIL_EMAIL=your_email@gmail.com"
+echo "   GMAIL_PASSWORD=your_16_char_app_password"
+echo ""
+echo "--- Google Calendar Setup ---"
 echo "1. Go to https://console.cloud.google.com"
-echo "2. Create a project, enable Gmail API + Google Calendar API"
-echo "3. Create OAuth credentials (Web application):"
-echo "   - Redirect URI for Calendar: http://localhost:3000/code"
-echo "   - Redirect URI for Gmail:    http://localhost:3001/code"
-echo "4. Create credentials.json in each MCP server directory:"
-echo ""
-echo "   $MCP_DIR/gcal/credentials.json"
-echo "   $MCP_DIR/gmail/credentials.json"
-echo ""
-echo '   Format: {"web":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost:300X/code"],"auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}}'
-echo ""
-echo "5. Get refresh tokens:"
-echo "   cd $MCP_DIR/gcal && node get-refresh-token.js"
-echo "   cd $MCP_DIR/gmail && node get-refresh-token.js"
-echo ""
-echo "6. Copy the access tokens to your .env file"
+echo "2. Create a project, enable Google Calendar API"
+echo "3. Create a Service Account (IAM > Service Accounts)"
+echo "4. Download the JSON key file"
+echo "5. Share your Google Calendar with the service account email"
+echo "   (Calendar Settings > Share > Add the service account email)"
+echo "6. Add to .env:"
+echo "   GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json"
+echo "   GOOGLE_CALENDAR_ID=your_email@gmail.com"
