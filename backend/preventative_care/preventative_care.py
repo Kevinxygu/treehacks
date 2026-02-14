@@ -2,17 +2,25 @@ import anthropic
 import pprint
 import json
 import re
+from datetime import datetime
 
 client = anthropic.Anthropic()
 
-with open("preventative_care/bad_message.txt", "r") as f:
-    report_content_json = json.load(f)
+def get_preventative_care_recommendations(ai_summary: str):
+    """
+    Generates preventative care recommendations based on AI and rule-based summaries.
 
-ai_summary = report_content_json.get("ai_summary", "No AI summary available.")
-risk_score = report_content_json.get("risk_score", "N/A")
-rule_based_summary = report_content_json.get("rule_based_summary", "No rule-based summary available.")
+    Args:
+        ai_summary (str): AI-generated summary of the session.
+        risk_score (str): Overall cognitive risk score for the session.
+        rule_based_summary (str): Rule-based summary of the session.
 
-prompt_content = f"""
+    Returns:
+        dict: A dictionary containing preventative care recommendations or an error message.
+    """
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    prompt_content = f"""
 To incorporate your request, I have added a "Triage & Selection Logic" section to the instructions. This ensures the agent first assesses the "linguistic biomarkers" (like word-finding pauses, vague descriptors, or simplified syntax) before deciding whether to launch a full rehabilitative suite or a standard cognitive "workout."
 
 Here is the refined prompt for your AI:
@@ -75,40 +83,37 @@ Tone & Style:
 Here is the AI-generated summary of the session:
 {ai_summary}
 
-The overall cognitive risk score for this session is: {risk_score}/100.
-Rule-based summary: {rule_based_summary}
-
 Based on the above information, and following the "Triage & Selection Logic" and "Protocols" provided, please provide recommendations as a JSON array. Each object in the array should have the following fields:
 - "Action title": A concise title for the action.
 - "Action explanation": A concise explanation of the action.
 - "Action reason": A concise reason why this action is recommended based on the provided report.
-- "Time": The current time when the recommendation was made. Please use the format YYYY-MM-DD HH:MM:SS.
+- "Time": "{current_time}"
 Do not use emojis.
 """
 
-message = client.messages.create(
-    model="claude-opus-4-6",
-    max_tokens=2000,
-    messages=[
-        {
-            "role": "user",
-            "content": prompt_content,
-        }
-    ],
-    system="Your response MUST be a JSON array of objects, as described in the user prompt. Do not include any other text or formatting outside the JSON array.",
-)
-try:
-    # Extract JSON string from the markdown code block
-    json_match = re.search(r"```json\n(.*?)\n```", message.content[0].text, re.DOTALL)
-    if json_match:
-        json_string = json_match.group(1)
-    else:
-        # If no markdown block, assume the whole response is JSON
-        json_string = message.content[0].text
-        
-    recommendations = json.loads(json_string)
-    print(json.dumps(recommendations, indent=2))
-except json.JSONDecodeError as e:
-    print(f"Error decoding JSON from Claude: {e}")
-    print("Raw Claude response:")
-    pprint.pprint(message.content)
+    message = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=2000,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt_content,
+            }
+        ],
+        system="Your response MUST be a JSON array of objects, as described in the user prompt. Do not include any other text or formatting outside the JSON array.",
+    )
+    try:
+        json_match = re.search(r"```json\n(.*?)\n```", message.content[0].text, re.DOTALL)
+        if json_match:
+            json_string = json_match.group(1)
+        else:
+            json_string = message.content[0].text
+            
+        recommendations = json.loads(json_string)
+        return recommendations
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from Claude: {e}")
+        print("Raw Claude response:")
+        pprint.pprint(message.content)
+        return {"error": "Failed to decode JSON from AI response", "raw_response": message.content[0].text}
+
