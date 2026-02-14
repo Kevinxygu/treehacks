@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import requests
 from analysis import TranscriptAnalyzer, generate_summary, generate_longitudinal_summary
 from analysis.transcript_analyzer import analyze_transcript, analyze_sessions
+from preventative_care.preventative_care import get_preventative_care_recommendations
 
 # 1. Create an instance of the FastAPI class
 app = FastAPI()
@@ -24,6 +25,10 @@ class SessionEntry(BaseModel):
 
 class LongitudinalRequest(BaseModel):
     sessions: list[SessionEntry]
+
+
+class PreventativeCareRequest(BaseModel):
+    ai_summary: str
 
 # 2. Define a route (the path) and the HTTP method (get)
 @app.get("/")
@@ -114,3 +119,14 @@ async def analyze_multiple_sessions_ai(req: LongitudinalRequest):
     rule_based = analyze_sessions(sessions)
     ai_result = generate_longitudinal_summary(rule_based)
     return {**ai_result, "rule_based": rule_based}
+
+
+@app.post("/preventative-care-recommendations")
+async def get_preventative_care_recommendations_endpoint(req: PreventativeCareRequest):
+    """
+    Generates preventative care recommendations based on provided summaries.
+    """
+    recommendations = get_preventative_care_recommendations(
+        req.ai_summary,
+    )
+    return recommendations

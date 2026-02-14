@@ -1,0 +1,115 @@
+{
+  "ai_summary": "# Cognitive Health Alert Report\n**Session 5 | February 14, 2026**\n\n---\n\n## 1. Overview\n\n**CRITICAL ALERT:** This session has identified a significant drop in cognitive performance markers, resulting in a high risk score of **82.7 out of 100**. The primary driver is a severe collapse in lexical diversity, suggesting substantial difficulty in word retrieval and a reliance on a very narrow set of repetitive vocabulary.\n\n---\n\n## 2. Areas of Concern\n\n⚠️ **SEVERE CONCERN: Lexical Impoverishment** The most alarming finding is the Type-Token Ratio (TTR) of **0.18**, which is far below the healthy threshold of 0.40. This indicates that the speaker is repeating the same few words almost constantly, a common marker for advanced semantic processing difficulties.\n\n---\n\n## 3. Detailed Breakdown\n\n❌ **Extreme Vocabulary Loss** – A TTR of 0.18 means that for every 10 words spoken, only 1 or 2 are unique. This \"vocabulary desert\" suggests the brain is struggling to access its mental dictionary, leading to extreme repetition of basic phrases.\n\n✅ **Other Markers (Secondary)** – While speech flow and pronoun usage remain within normal ranges for now, the primary failure in vocabulary richness overshadows these secondary metrics.\n\n---\n\n## 4. Urgent Recommended Actions\n\nBecause this represents a significant deviation, we recommend the following:\n\n### **Medical Consultation**\n- **Contact a Neurologist or Primary Care Physician immediately.** Share this report and request a formal cognitive assessment (such as a MoCA or MMSE).\n- Review all current medications to rule out side effects or interactions causing sudden \"brain fog.\"\n\n### **Supportive Communication**\n- Use simple, direct language.\n- Avoid correcting their repetitive speech, as this can cause frustration. Instead, offer the words they seem to be searching for gently.\n\n---",
+  "risk_score": 82.7,
+  "rule_based_summary": "CRITICAL CONCERN: Severe lexical impoverishment detected. Immediate follow-up recommended. Risk score: 82.7/100.",
+  "session_id": "5",
+  "session_date": "02-14-2026",
+  "rule_based": {
+    "session_id": "5",
+    "session_date": "02-14-2026",
+    "total_words": 56,
+    "unique_words": 10,
+    "total_sentences": 3,
+    "risk_score": 82.7,
+    "summary": "CRITICAL CONCERN: Severe lexical impoverishment detected. Immediate follow-up recommended. Risk score: 82.7/100.",
+    "flagged_excerpts": [],
+    "markers": [
+      {
+        "category": "lexical_diversity",
+        "marker": "type_token_ratio",
+        "value": 0.18,
+        "threshold": 0.4,
+        "flagged": true,
+        "severity": "critical",
+        "evidence": [
+          "TTR=0.18 (Extreme vocabulary repetition/limitation: only 10 unique words in 56 total)"
+        ]
+      },
+      {
+        "category": "anomia",
+        "marker": "hedge_phrase_rate",
+        "value": 0,
+        "threshold": 0.02,
+        "flagged": false,
+        "severity": "normal",
+        "evidence": []
+      },
+      {
+        "category": "disfluency",
+        "marker": "filler_word_rate",
+        "value": 0,
+        "threshold": 0.08,
+        "flagged": false,
+        "severity": "normal",
+        "evidence": []
+      },
+      {
+        "category": "pronoun_usage",
+        "marker": "pronoun_ratio",
+        "value": 0.1071,
+        "threshold": 0.25,
+        "flagged": false,
+        "severity": "normal",
+        "evidence": [
+          "Pronouns: 6/56 words (10.7%)"
+        ]
+      },
+      {
+        "category": "pronoun_usage",
+        "marker": "generic_pronoun_ratio",
+        "value": 0,
+        "threshold": 0.1,
+        "flagged": false,
+        "severity": "normal",
+        "evidence": [
+          "Generic pronouns (it/this/that/thing/stuff): 0/56 (0.0%)"
+        ]
+      },
+      {
+        "category": "pause_patterns",
+        "marker": "pause_rate",
+        "value": 0.0179,
+        "threshold": 0.03,
+        "flagged": false,
+        "severity": "mild",
+        "evidence": [
+          "...en pick up the prescription from 5th and... i don't remember the exact street but w..."
+        ]
+      },
+      {
+        "category": "repetition",
+        "marker": "within_session_repetitions",
+        "value": 0,
+        "threshold": 1,
+        "flagged": false,
+        "severity": "normal",
+        "evidence": []
+      }
+    ],
+    "raw_metrics": {
+      "ttr": 0.18,
+      "mattr": 0.2,
+      "unique_words": 10,
+      "total_words": 56,
+      "hapax_legomena": 28,
+      "hapax_ratio": 0.5,
+      "hedge_phrase_count": 0,
+      "hedge_phrase_rate": 0,
+      "trailing_sentences": 0,
+      "anomia_indicators": 0,
+      "filler_count": 0,
+      "filler_rate": 0,
+      "false_starts": 0,
+      "immediate_word_repetitions": 0,
+      "total_disfluencies": 0,
+      "pronoun_count": 6,
+      "pronoun_ratio": 0.1071,
+      "generic_pronoun_count": 0,
+      "generic_pronoun_ratio": 0,
+      "pause_count": 1,
+      "pause_rate": 0.0179,
+      "within_session_repetitions": 0,
+      "repeated_pairs": []
+    }
+  }
+}
