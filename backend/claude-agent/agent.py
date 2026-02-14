@@ -39,10 +39,6 @@ MONGODB_CONNECTION_STRING = os.environ.get("MONGODB_CONNECTION_STRING", "")
 # Optional - Cal.com
 CAL_API_KEY = os.environ.get("CAL_API_KEY", "")
 
-# Optional - Google Calendar (Service Account)
-GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-GOOGLE_CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "")
-
 # Optional - Gmail (App Password via IMAP/SMTP)
 GMAIL_EMAIL = os.environ.get("GMAIL_EMAIL", "")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
@@ -75,29 +71,25 @@ You can help with:
 3. **Doctor Appointments** (Cal.com)
    - Book, reschedule, or cancel appointments
    - List upcoming appointments
-
-4. **Calendar & Reminders** (Google Calendar)
-   - Set medication reminders as recurring events
    - Check "What's on my schedule today?"
-   - Add bill payment reminders
 
-5. **Email Family** (Gmail)
+4. **Email Family** (Gmail)
    - Send emails to family members ("Email my daughter that I'm doing well")
    - Check for important emails
 
-6. **Grocery Shopping** (Instacart)
+5. **Grocery Shopping** (Instacart)
    - Create shopping lists
    - Find nearby stores
 
-7. **Weather** (Weather MCP)
+6. **Weather** (Weather MCP)
    - Check weather before outings ("Should I go out today?")
    - Weather alerts and air quality
 
-8. **Emergency Contacts & Bills** (MongoDB database)
+7. **Emergency Contacts & Bills** (MongoDB database)
    - Store and retrieve emergency contact info
    - Track upcoming bills and due dates
 
-9. **Personal Preferences** (Memory MCP + MongoDB)
+8. **Personal Preferences** (Memory MCP + MongoDB)
    - Remember allergies, preferred doctors, pharmacy info
    - Store personal context across conversations
 
@@ -168,26 +160,6 @@ def build_mcp_servers() -> dict:
         print("  [+] Cal.com MCP (appointments)")
     else:
         print("  [-] Cal.com MCP - SKIPPED (set CAL_API_KEY)")
-
-    # --- Google Calendar MCP (Python, via uvx) ---
-    if GOOGLE_APPLICATION_CREDENTIALS and GOOGLE_CALENDAR_ID:
-        servers["google-calendar"] = {
-            "command": "uvx",
-            "args": ["google-calendar-mcp@latest"],
-            "env": {
-                "GOOGLE_APPLICATION_CREDENTIALS": GOOGLE_APPLICATION_CREDENTIALS,
-                "GOOGLE_CALENDAR_ID": GOOGLE_CALENDAR_ID,
-            },
-        }
-        allowed.append("mcp__google-calendar__*")
-        print("  [+] Google Calendar MCP (reminders, schedule)")
-    else:
-        reasons = []
-        if not GOOGLE_APPLICATION_CREDENTIALS:
-            reasons.append("set GOOGLE_APPLICATION_CREDENTIALS")
-        if not GOOGLE_CALENDAR_ID:
-            reasons.append("set GOOGLE_CALENDAR_ID")
-        print(f"  [-] Google Calendar MCP - SKIPPED ({', '.join(reasons)})")
 
     # --- Gmail MCP (Python, via uv run) ---
     gmail_server = MCP_SERVERS_DIR / "gmail" / "src" / "email_client" / "server.py"
