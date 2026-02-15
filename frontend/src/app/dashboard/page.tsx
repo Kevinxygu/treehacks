@@ -21,6 +21,9 @@ import {
   Battery,
   Activity,
   X,
+  Moon,
+  Zap,
+  FileText
   RefreshCw
 } from "lucide-react";
 
