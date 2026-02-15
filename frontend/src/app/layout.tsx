@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Pangolin, Rubik_Dirt } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const pangolin = Pangolin({
+  weight: "400",
+  variable: "--font-pangolin",
+  subsets: ["latin"],
+});
+
+const rubikDirt = Rubik_Dirt({
+  weight: "400",
+  variable: "--font-rubik-dirt",
   subsets: ["latin"],
 });
 
@@ -20,7 +32,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased font-sans`}>
+      <body
+        className={`${inter.variable} ${pangolin.variable} ${rubikDirt.variable} antialiased font-sans`}
+      >
         {children}
       </body>
     </html>
