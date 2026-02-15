@@ -1,6 +1,7 @@
 We are building an agentic AI app for eldery people. Our app has a mobile app for the elderly, a web app for caretakers (family, doctors), a backend on vercel serverless compute.
 
 We have four main features:
+
 Feature 1: DATA CAPTURE + PREDICTION: We will capture health data from weareables like Whoop as well as audio data (see feature three for how we will capture some audio data) to provide real-time health data and insights (like deterioration in memory, speech performance) to the caretakers of the elders. We will use Vital Audio (startup) to get biometrics from audio samples.
 
 Feature 2 -> INTERVENTION: Based on the health data, we will provide science-bakced interventions to prevent that decline. For example, through a mix of cognitive activities, suggested physical activity, suggested social activity. We will track adherence to plan and track specific cognitive metrics over time.
