@@ -1,4 +1,11 @@
 .venv/
 __pycache__/
+node_modules/
+
+# MCP servers (cloned repos, built locally)
+backend/claude-agent/mcp-servers/
+
+# Memory MCP persistent storage
+backend/claude-agent/memory.json
 .env
 .whoop_refresh_token
