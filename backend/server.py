@@ -5,9 +5,11 @@ from analysis import TranscriptAnalyzer, generate_summary, generate_longitudinal
 from analysis.transcript_analyzer import analyze_transcript, analyze_sessions
 from preventative_care.preventative_care import get_preventative_care_recommendations
 from companionship.controller import router as companionship_router
+from whoop.controller import router as whoop_router
 
 app = FastAPI()
 app.include_router(companionship_router)
+app.include_router(whoop_router)
 
 analyzer = TranscriptAnalyzer()
 

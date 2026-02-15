@@ -3,17 +3,14 @@ import random
 import string
 import requests
 from datetime import datetime, timedelta
+from pathlib import Path
 from urllib.parse import urlencode, urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
-CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]
-CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
-REFRESH_TOKEN = os.environ.get("WHOOP_REFRESH_TOKEN")
 
 AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
@@ -22,34 +19,42 @@ REDIRECT_URI = "http://127.0.0.1:8765/callback"
 SCOPES = "read:sleep offline"
 
 
-def refresh_access_token():
+def refresh_access_token() -> tuple[str, str]:
+    client_id = os.environ["WHOOP_CLIENT_ID"]
+    client_secret = os.environ["WHOOP_CLIENT_SECRET"]
+    refresh_token = os.environ.get("WHOOP_REFRESH_TOKEN")
+    if not refresh_token:
+        raise ValueError("WHOOP_REFRESH_TOKEN not set")
+
     resp = requests.post(
         TOKEN_URL,
         data={
             "grant_type": "refresh_token",
-            "refresh_token": REFRESH_TOKEN,
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
+            "refresh_token": refresh_token,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "scope": SCOPES,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     resp.raise_for_status()
     data = resp.json()
-    return data["access_token"], data.get("refresh_token") or REFRESH_TOKEN
+    return data["access_token"], data.get("refresh_token") or refresh_token
 
 
-def run_oauth_flow():
+def run_oauth_flow() -> str:
+    client_id = os.environ["WHOOP_CLIENT_ID"]
+    client_secret = os.environ["WHOOP_CLIENT_SECRET"]
     state = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     params = {
-        "client_id": CLIENT_ID,
+        "client_id": client_id,
         "redirect_uri": REDIRECT_URI,
         "response_type": "code",
         "scope": SCOPES,
         "state": state,
     }
     auth_full = f"{AUTH_URL}?{urlencode(params)}"
-    code_holder = {}
+    code_holder: dict[str, str | None] = {}
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -82,8 +87,8 @@ def run_oauth_flow():
         data={
             "grant_type": "authorization_code",
             "code": code,
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "redirect_uri": REDIRECT_URI,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -96,14 +101,14 @@ def run_oauth_flow():
     return data["access_token"]
 
 
-def get_access_token():
-    if REFRESH_TOKEN:
+def get_access_token() -> str:
+    if os.environ.get("WHOOP_REFRESH_TOKEN"):
         access_token, _ = refresh_access_token()
         return access_token
     return run_oauth_flow()
 
 
-def get_weekly_sleep():
+def get_weekly_sleep() -> list[dict]:
     access_token = get_access_token()
     end_time = datetime.utcnow()
     start_time = end_time - timedelta(days=7)
@@ -117,25 +122,24 @@ def get_weekly_sleep():
         "Content-Type": "application/json",
     }
     url = f"{API_BASE}/v2/activity/sleep"
-    try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        data = response.json()
-        print("--- Sleep Data (Past 7 Days) ---")
-        for record in data.get("records", []):
-            start = record["start"]
-            score = record["score"]["sleep_performance_percentage"]
-            consistency = record["score"]["sleep_consistency_percentage"]
-            in_bed_ms = record["score"]["stage_summary"]["total_in_bed_time_milli"]
-            hours = round(in_bed_ms / (1000 * 60 * 60), 2)
-            print(f"Date: {start[:10]} | Performance: {score}% | Hours in Bed: {hours}h | Consistency: {consistency}%")
-    except requests.exceptions.HTTPError as err:
-        print("HTTP Error:", err)
-        if hasattr(err.response, "text"):
-            print(err.response.text)
-    except Exception as e:
-        print("Error:", e)
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    data = response.json()
+    records = []
+    for r in data.get("records", []):
+        score = r.get("score", {})
+        stage_summary = score.get("stage_summary", {})
+        in_bed_ms = stage_summary.get("total_in_bed_time_milli", 0)
+        hours = round(in_bed_ms / (1000 * 60 * 60), 2)
+        records.append({
+            "date": r["start"][:10],
+            "performance_percent": score.get("sleep_performance_percentage"),
+            "consistency_percent": score.get("sleep_consistency_percentage"),
+            "hours_in_bed": hours,
+        })
+    return records
 
 
 if __name__ == "__main__":
-    get_weekly_sleep()
+    import json
+    print(json.dumps(get_weekly_sleep(), indent=2))
