@@ -253,27 +253,12 @@ function MetricCard({
 }
 
 export default function DashboardOverview() {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [whoopData, setWhoopData] = useState({
+  const [whoopData] = useState({
     sleep: 85,
     recovery: 72,
-    strain: 4.2, // Strain is usually 0-21, but user asked for "out of 100". I'll convert or scale it. Or maybe just use 0-100 for all as requested.
-    strainPercent: 32, // User asked for circular value out of 100
+    strain: 4.2,
+    strainPercent: 32,
   });
-
-  const handleSync = () => {
-    setIsSyncing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSyncing(false);
-      setWhoopData({
-        sleep: Math.floor(Math.random() * 40) + 60,
-        recovery: Math.floor(Math.random() * 60) + 20,
-        strain: whoopData.strain, // preserve previous strain or update as well
-        strainPercent: Math.floor(Math.random() * 80) + 10,
-      });
-    }, 1500);
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -289,16 +274,6 @@ export default function DashboardOverview() {
               <p className="text-xs text-gray-400">Real-time biometrics from wearable service</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-[#5B9A8B] border-[#5B9A8B]/20 hover:bg-[#5B9A8B]/5"
-            onClick={handleSync}
-            disabled={isSyncing}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-            {isSyncing ? "Syncing..." : "Sync Data"}
-          </Button>
         </CardHeader>
         <CardContent className="py-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
