@@ -17,9 +17,12 @@ FRONTEND_DASHBOARD_URL = os.environ.get("FRONTEND_DASHBOARD_URL", "http://localh
 
 
 def _whoop_error(e: Exception) -> HTTPException:
+    print(f"WHOOP ERROR: {type(e).__name__}: {str(e)}")
+    import traceback
+    traceback.print_exc()
     if isinstance(e, ValueError):
         return HTTPException(status_code=500, detail=str(e))
-    return HTTPException(status_code=502, detail=str(e))
+    return HTTPException(status_code=502, detail=f"Whoop service error: {str(e)}")
 
 
 @router.get("/status")

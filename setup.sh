@@ -33,17 +33,17 @@ uv sync
 echo ""
 echo "Starting services:"
 echo "  - Backend: http://localhost:8000"
-echo "  - Frontend: http://localhost:3001"
+echo "  - Frontend: http://localhost:3002"
 echo "  - Mobile: Expo dev server"
 echo "Press Ctrl+C to stop all services."
 echo ""
 
 cd "$ROOT_DIR/backend"
-uv run uvicorn server:app --reload &
+uv run uvicorn server:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
 cd "$ROOT_DIR/frontend"
-PORT=3001 npm run dev &
+PORT=3002 npm run dev &
 FRONTEND_PID=$!
 
 cd "$ROOT_DIR/mobile"

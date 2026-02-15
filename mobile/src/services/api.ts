@@ -1,16 +1,15 @@
+import { API_URL, FASTAPI_URL } from "@env";
+
 // ------------------------------------------------------------------
-// IMPORTANT: Change this to your machine's local IP when testing on
-// a physical device.  "localhost" only works in the iOS simulator.
-//
-//   macOS:  ifconfig | grep "inet " | grep -v 127.0.0.1
-//   The Express backend runs on port 3001.
+// API Configuration
+// Loaded from .env file for local development
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
-    ? "http://10.19.176.35:3001" // your Mac's IP on local network
+    ? API_URL
     : "https://your-production-api.com"; // production
 
 const FASTAPI_BASE = __DEV__
-    ? "http://10.19.176.35:8000" // FastAPI backend for analysis
+    ? FASTAPI_URL
     : "https://your-production-api.com";
 
 // ---------- Types ----------

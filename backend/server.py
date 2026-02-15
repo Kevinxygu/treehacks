@@ -21,21 +21,11 @@ app = FastAPI()
 # In-memory session store
 _sessions: list[dict] = []
 
-# Add CORS middleware
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://localhost:52766",
-    "http://127.0.0.1:52766",
-]
-
+# Add CORS middleware — allow all origins in dev for mobile + dashboard access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

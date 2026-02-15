@@ -228,16 +228,51 @@ export default function ConversationScreen() {
 
   // ---------- End chat ----------
 
-  const handleEndChat = useCallback(() => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleEndChat = useCallback(async () => {
     // Stop any playing audio
     if (currentSound) {
       currentSound.stopAsync().catch(() => { });
       currentSound.unloadAsync().catch(() => { });
     }
-    navigation.navigate("Confirmation", {
-      summary: "Your conversation has been saved and analyzed.",
-    });
-  }, [navigation, currentSound]);
+
+    // Build transcript from all messages
+    const transcript = messages
+      .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.text}`)
+      .join("\n");
+
+    if (transcript.trim().length === 0) {
+      navigation.navigate("Confirmation", {
+        summary: "No conversation to analyze.",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const sessionId = `session-${Date.now()}`;
+      const sessionDate = new Date().toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+      });
+      const result = await analyzeTranscript(transcript, sessionId, sessionDate);
+
+      navigation.navigate("Confirmation", {
+        summary: "Your conversation has been analyzed.",
+        riskScore: result.risk_score,
+        analysisSummary: result.rule_based_summary,
+      });
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      navigation.navigate("Confirmation", {
+        summary: "Analysis could not be completed. Your conversation has been saved.",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [navigation, currentSound, messages]);
 
   // ---------- Render ----------
 
@@ -308,8 +343,8 @@ export default function ConversationScreen() {
             <Text style={[styles.micBarText, isListening && styles.micBarTextActive]}>{isProcessing ? "Thinking..." : isListening ? "Listening..." : "Tap to speak"}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleEndChat} activeOpacity={0.85} style={styles.endButton}>
-            <Text style={styles.endButtonText}>End chat</Text>
+          <TouchableOpacity onPress={handleEndChat} activeOpacity={0.85} disabled={isAnalyzing} style={[styles.endButton, isAnalyzing && styles.micBarDisabled]}>
+            <Text style={styles.endButtonText}>{isAnalyzing ? "Analyzing..." : "End chat"}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
