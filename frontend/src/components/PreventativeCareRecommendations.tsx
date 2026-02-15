@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { fetchPreventativeCare } from "@/lib/api";
 
@@ -14,12 +14,73 @@ interface PreventativeCareRecommendation {
   Time: string;
 }
 
+const BASELINE_RECOMMENDATIONS: PreventativeCareRecommendation[] = [
+  {
+    "Action title": "Stay physically active",
+    "Action explanation": "Aim for at least 150 minutes of moderate activity per week (e.g. walking, swimming).",
+    "Action reason": "Regular exercise supports heart health, mood, and cognitive function.",
+    Time: new Date().toISOString(),
+  },
+  {
+    "Action title": "Eat a balanced diet",
+    "Action explanation": "Include plenty of vegetables, fruits, whole grains, and lean protein. Limit added sugars and processed foods.",
+    "Action reason": "Good nutrition helps maintain energy, immunity, and long-term health.",
+    Time: new Date().toISOString(),
+  },
+  {
+    "Action title": "Get enough sleep",
+    "Action explanation": "Aim for 7–9 hours of sleep per night and keep a consistent schedule.",
+    "Action reason": "Sleep supports memory, mood, and overall well-being.",
+    Time: new Date().toISOString(),
+  },
+  {
+    "Action title": "Stay socially connected",
+    "Action explanation": "Schedule regular calls or visits with family and friends.",
+    "Action reason": "Social connection is linked to better mental and physical health.",
+    Time: new Date().toISOString(),
+  },
+];
+
 interface PreventativeCareRecommendationsProps {
   sessionResults?: { ai_summary?: string } | null;
 }
 
-export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = () => {
+export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = ({ sessionResults }) => {
   const [followed, setFollowed] = useState<Set<number>>(new Set());
+  const [recommendations, setRecommendations] = useState<PreventativeCareRecommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [usingBaseline, setUsingBaseline] = useState(false);
+
+  useEffect(() => {
+    const aiSummary = sessionResults?.ai_summary;
+    if (!aiSummary) {
+      setRecommendations(BASELINE_RECOMMENDATIONS);
+      setUsingBaseline(true);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setUsingBaseline(false);
+    fetchPreventativeCare(aiSummary)
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRecommendations(data);
+          setUsingBaseline(false);
+        } else {
+          setRecommendations(BASELINE_RECOMMENDATIONS);
+          setUsingBaseline(true);
+        }
+      })
+      .catch(() => {
+        setRecommendations(BASELINE_RECOMMENDATIONS);
+        setUsingBaseline(true);
+        setError(null);
+      })
+      .finally(() => setLoading(false));
+  }, [sessionResults?.ai_summary]);
 
   const toggleFollow = (index: number) => {
     setFollowed((prev) => {
@@ -39,8 +100,23 @@ export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommend
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-4"> {/* Simplified to force single-column vertical stack */}
-          {hardcodedRecommendations.map((rec, index) => {
+        {loading && (
+          <div className="flex items-center gap-2 py-6 text-gray-500">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Loading recommendations...</span>
+          </div>
+        )}
+        {usingBaseline && !loading && (
+          <p className="py-2 text-sm text-gray-500">Showing general recommendations (personalized ones could not be loaded).</p>
+        )}
+        {error && (
+          <p className="py-4 text-sm text-red-600">{error}</p>
+        )}
+        {!loading && !error && recommendations.length === 0 && (
+          <p className="py-4 text-sm text-gray-500">No recommendations available.</p>
+        )}
+        <div className="grid grid-cols-1 gap-4">
+          {recommendations.map((rec, index) => {
             const isFollowed = followed.has(index);
             return (
               <Card
