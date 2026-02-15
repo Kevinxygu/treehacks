@@ -15,18 +15,86 @@ import {
   TrendingUp,
   Calendar,
   FileText,
+  RefreshCw,
+  Zap,
+  Moon,
+  Battery,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   AreaChart,
   Area,
   BarChart,
   Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+function CircularProgress({
+  value,
+  size = 120,
+  strokeWidth = 10,
+  label,
+  icon: Icon
+}: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+  label: string;
+  icon: React.ElementType;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (value / 100) * circumference;
+
+  const getColor = (val: number) => {
+    if (val >= 65) return "#7EC8B8"; // Green
+    if (val >= 35) return "#E8C87B"; // Yellow
+    return "#D97B7B"; // Red
+  };
+
+  const color = getColor(value);
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative" style={{ width: size, height: size }}>
+        {/* Background Circle */}
+        <svg width={size} height={size} className="transform -rotate-90">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="#F5F7F6"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+          {/* Progress Circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeDasharray={circumference}
+            style={{
+              strokeDashoffset: offset,
+              transition: "stroke-dashoffset 1s ease-in-out, stroke 0.5s ease"
+            }}
+            strokeLinecap="round"
+          />
+        </svg>
+        {/* Center Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <Icon className="w-5 h-5 mb-1 opacity-50" style={{ color }} />
+          <span className="text-2xl font-bold text-[#2D3B36]">{value}%</span>
+        </div>
+      </div>
+      <span className="text-sm font-semibold text-[#6B7C74]">{label}</span>
+    </div>
+  );
+}
 
 const cognitiveData = [
   { day: "Mon", score: 72 },
@@ -145,9 +213,9 @@ function MetricCard({
   children?: React.ReactNode;
 }) {
   const trendColors = {
-    up: "text-alert-green",
-    down: "text-alert-red",
-    stable: "text-gray-500",
+    up: "text-[#7EC8B8]",
+    down: "text-[#D97B7B]",
+    stable: "text-[#6B7C74]",
   };
 
   return (
@@ -174,8 +242,8 @@ function MetricCard({
         </div>
 
         <div className="flex items-baseline gap-1 mb-3">
-          <span className="text-3xl font-bold text-gray-900">{value}</span>
-          {unit && <span className="text-lg text-gray-400">{unit}</span>}
+          <span className="text-3xl font-bold text-[#2D3B36]">{value}</span>
+          {unit && <span className="text-lg text-[#9CA8A2]">{unit}</span>}
         </div>
 
         {children}
@@ -185,8 +253,49 @@ function MetricCard({
 }
 
 export default function DashboardOverview() {
+  const [whoopData] = useState({
+    sleep: 85,
+    recovery: 72,
+    strain: 4.2,
+    strainPercent: 32,
+  });
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Whoop Data Section - Front and Center */}
+      <Card className="border-0 shadow-sm bg-white overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-50 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+              <span className="text-white font-black text-xs">W</span>
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold">Whoop Health Insights</CardTitle>
+              <p className="text-xs text-gray-400">Real-time biometrics from wearable service</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <CircularProgress
+              value={whoopData.recovery}
+              label="Recovery"
+              icon={Battery}
+            />
+            <CircularProgress
+              value={whoopData.sleep}
+              label="Sleep Performance"
+              icon={Moon}
+            />
+            <CircularProgress
+              value={whoopData.strainPercent}
+              label="Daily Strain"
+              icon={Zap}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Alert section */}
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
@@ -196,32 +305,29 @@ export default function DashboardOverview() {
           {alerts.map((alert, i) => (
             <div
               key={i}
-              className={`flex items-center gap-4 p-4 rounded-xl border ${
-                alert.level === "warning"
-                  ? "bg-amber-50/50 border-amber-100"
-                  : alert.level === "critical"
+              className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
+                ? "bg-amber-50/50 border-amber-100"
+                : alert.level === "critical"
                   ? "bg-red-50/50 border-red-100"
                   : "bg-green-50/50 border-green-100"
-              }`}
+                }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  alert.level === "warning"
-                    ? "bg-alert-yellow/20"
-                    : alert.level === "critical"
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
+                  ? "bg-alert-yellow/20"
+                  : alert.level === "critical"
                     ? "bg-alert-red/20"
                     : "bg-alert-green/20"
-                }`}
+                  }`}
               >
                 {alert.level === "success" ? (
                   <CheckCircle2 className="w-5 h-5 text-alert-green" />
                 ) : (
                   <AlertTriangle
-                    className={`w-5 h-5 ${
-                      alert.level === "warning"
-                        ? "text-alert-yellow"
-                        : "text-alert-red"
-                    }`}
+                    className={`w-5 h-5 ${alert.level === "warning"
+                      ? "text-alert-yellow"
+                      : "text-alert-red"
+                      }`}
                   />
                 )}
               </div>
@@ -249,7 +355,7 @@ export default function DashboardOverview() {
           trend="down"
           trendValue="-4.2%"
           icon={Brain}
-          color="#4A90E2"
+          color="#5B9A8B"
         >
           <div className="h-16">
             <ResponsiveContainer width="100%" height="100%">
@@ -263,7 +369,7 @@ export default function DashboardOverview() {
                 <Area
                   type="monotone"
                   dataKey="score"
-                  stroke="#4A90E2"
+                  stroke="#5B9A8B"
                   strokeWidth={2}
                   fill="url(#cogGrad)"
                 />
@@ -279,12 +385,12 @@ export default function DashboardOverview() {
           trend="up"
           trendValue="+12%"
           icon={Footprints}
-          color="#7ED321"
+          color="#9DC08B"
         >
           <div className="h-16">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activityData}>
-                <Bar dataKey="steps" fill="#7ED321" radius={[2, 2, 0, 0]} opacity={0.7} />
+                <Bar dataKey="steps" fill="#9DC08B" radius={[2, 2, 0, 0]} opacity={0.7} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -299,9 +405,9 @@ export default function DashboardOverview() {
           icon={Pill}
           color="#9B51E0"
         >
-          <div className="w-full bg-gray-100 rounded-full h-3 mt-1">
+          <div className="w-full bg-[#F5F7F6] rounded-full h-3 mt-1">
             <div
-              className="h-3 rounded-full bg-gradient-to-r from-care-purple to-care-blue"
+              className="h-3 rounded-full bg-gradient-to-r from-[#8B9DC0] to-[#5B9A8B]"
               style={{ width: "95%" }}
             />
           </div>
@@ -315,17 +421,17 @@ export default function DashboardOverview() {
           trend="up"
           trendValue="+2"
           icon={MessageCircle}
-          color="#F5A623"
+          color="#E8B298"
         >
           <div className="flex items-center gap-2 mt-1">
             {[4, 3, 5, 2, 4, 6, 3].map((val, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div
-                  className="w-full rounded-sm bg-care-orange/20"
+                  className="w-full rounded-sm bg-[#E8B298]/20"
                   style={{ height: `${val * 6}px` }}
                 >
                   <div
-                    className="w-full rounded-sm bg-care-orange"
+                    className="w-full rounded-sm bg-[#E8B298]"
                     style={{ height: `${val * 6}px`, opacity: 0.7 }}
                   />
                 </div>
@@ -347,7 +453,7 @@ export default function DashboardOverview() {
                 </CardTitle>
                 <Link
                   href="/dashboard/transcript"
-                  className="text-sm text-care-blue hover:underline font-medium"
+                  className="text-sm text-[#5B9A8B] hover:underline font-medium"
                 >
                   View all
                 </Link>
@@ -359,10 +465,10 @@ export default function DashboardOverview() {
                   <Link
                     key={conv.id}
                     href="/dashboard/transcript"
-                    className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50/50 transition-colors"
+                    className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#F8FAF9]/50 transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-care-blue/10 flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="w-5 h-5 text-care-blue" />
+                    <div className="w-10 h-10 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-5 h-5 text-[#5B9A8B]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -405,13 +511,12 @@ export default function DashboardOverview() {
               {upcomingEvents.map((event, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                      event.type === "medical"
-                        ? "bg-care-blue/10"
-                        : event.type === "family"
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${event.type === "medical"
+                      ? "bg-care-blue/10"
+                      : event.type === "family"
                         ? "bg-care-orange/10"
                         : "bg-care-purple/10"
-                    }`}
+                      }`}
                   >
                     {event.type === "medical" ? (
                       <Calendar className="w-4 h-4 text-care-blue" />

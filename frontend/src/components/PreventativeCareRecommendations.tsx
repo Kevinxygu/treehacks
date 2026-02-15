@@ -28,10 +28,10 @@ const hardcodedRecommendations: PreventativeCareRecommendation[] = [
 ];
 
 interface PreventativeCareRecommendationsProps {
-  sessionResults: any; // sessionResults is no longer used for fetching, but still kept for potential future use or context
+  sessionResults?: unknown;
 }
 
-export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = ({ sessionResults }) => {
+export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = () => {
   // sessionResults is not directly used in this hardcoded version, but can be passed for context if needed.
 
   return (
