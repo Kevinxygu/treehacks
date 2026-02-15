@@ -187,19 +187,7 @@ def get_weekly_sleep() -> list[dict]:
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
     data = response.json()
-    records = []
-    for r in data.get("records", []):
-        score = r.get("score", {})
-        stage_summary = score.get("stage_summary", {})
-        in_bed_ms = stage_summary.get("total_in_bed_time_milli", 0)
-        hours = round(in_bed_ms / (1000 * 60 * 60), 2)
-        records.append({
-            "date": r["start"][:10],
-            "performance_percent": score.get("sleep_performance_percentage"),
-            "consistency_percent": score.get("sleep_consistency_percentage"),
-            "hours_in_bed": hours,
-        })
-    return records
+    return data.get("records", [])
 
 
 def _auth_headers() -> dict:
@@ -228,19 +216,7 @@ def get_weekly_cycle() -> list[dict]:
     response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
     response.raise_for_status()
     data = response.json()
-    records = []
-    for r in data.get("records", []):
-        score = r.get("score", {})
-        records.append({
-            "id": r.get("id"),
-            "date": r["start"][:10],
-            "strain": score.get("strain"),
-            "kilojoule": score.get("kilojoule"),
-            "average_heart_rate": score.get("average_heart_rate"),
-            "max_heart_rate": score.get("max_heart_rate"),
-            "score_state": r.get("score_state"),
-        })
-    return records
+    return data.get("records", [])
 
 
 def get_weekly_recovery() -> list[dict]:
@@ -248,22 +224,7 @@ def get_weekly_recovery() -> list[dict]:
     response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
     response.raise_for_status()
     data = response.json()
-    records = []
-    for r in data.get("records", []):
-        score = r.get("score") or {}
-        records.append({
-            "cycle_id": r.get("cycle_id"),
-            "sleep_id": r.get("sleep_id"),
-            "created_at": r.get("created_at", "")[:10],
-            "score_state": r.get("score_state"),
-            "recovery_score": score.get("recovery_score"),
-            "resting_heart_rate": score.get("resting_heart_rate"),
-            "hrv_rmssd_milli": score.get("hrv_rmssd_milli"),
-            "spo2_percentage": score.get("spo2_percentage"),
-            "skin_temp_celsius": score.get("skin_temp_celsius"),
-            "user_calibrating": score.get("user_calibrating"),
-        })
-    return records
+    return data.get("records", [])
 
 
 if __name__ == "__main__":
