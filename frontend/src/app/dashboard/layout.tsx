@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/cognitive", icon: Brain, label: "Cognitive Health" },
+  { href: "/dashboard/speech-check", icon: Activity, label: "Speech Check" },
   { href: "/dashboard/transcript", icon: MessageSquareText, label: "Transcripts" },
 ];
 

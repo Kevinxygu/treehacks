@@ -75,6 +75,98 @@ async function textToSpeech(text: string): Promise<Buffer> {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Speech diagnosis (Deepgram: transcript + sentiment)                */
+/* ------------------------------------------------------------------ */
+
+const DEEPGRAM_BASE = "https://api.deepgram.com/v1";
+
+interface DeepgramSentimentSegment {
+    text: string;
+    start_word: number;
+    end_word: number;
+    sentiment: "positive" | "negative" | "neutral";
+    sentiment_score: number;
+}
+
+interface SpeechDiagnosisResult {
+    transcript: string;
+    overallSentiment: "positive" | "negative" | "neutral";
+    overallSentimentScore: number;
+    soundingLow: boolean;
+    summary: string;
+    segments: Array<{ text: string; sentiment: string; sentimentScore: number }>;
+}
+
+async function getSpeechDiagnosis(audioBuffer: Buffer, contentType: string): Promise<SpeechDiagnosisResult> {
+    const apiKey = process.env.DEEPGRAM_API_KEY;
+    if (!apiKey) {
+        throw new Error("DEEPGRAM_API_KEY is not set");
+    }
+
+    const url = `${DEEPGRAM_BASE}/listen?sentiment=true&language=en`;
+    const res = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `Token ${apiKey}`,
+            "Content-Type": contentType || "audio/webm",
+        },
+        body: audioBuffer,
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Deepgram error ${res.status}: ${text}`);
+    }
+
+    const data = (await res.json()) as {
+        results?: {
+            channels?: Array<{
+                alternatives?: Array<{ transcript?: string; words?: Array<{ word: string }> }>;
+            }>;
+            sentiments?: {
+                segments?: DeepgramSentimentSegment[];
+                average?: { sentiment: string; sentiment_score: number };
+            };
+        };
+    };
+
+    const channel = data.results?.channels?.[0];
+    const alternative = channel?.alternatives?.[0];
+    const transcript = alternative?.transcript ?? "";
+    const sentiments = data.results?.sentiments;
+    const segments = sentiments?.segments ?? [];
+    const average = sentiments?.average ?? { sentiment: "neutral", sentiment_score: 0 };
+
+    const overallSentiment = (average.sentiment || "neutral") as "positive" | "negative" | "neutral";
+    const overallSentimentScore = typeof average.sentiment_score === "number" ? average.sentiment_score : 0;
+
+    // "Sounding low" = negative or low sentiment score
+    const soundingLow = overallSentiment === "negative" || overallSentimentScore < -0.2;
+
+    let summary = "Speech appears neutral.";
+    if (soundingLow) {
+        summary = "Speech may sound low or down. Sentiment is negative or subdued — consider checking in.";
+    } else if (overallSentiment === "positive" && overallSentimentScore > 0.3) {
+        summary = "Speech sounds positive and engaged.";
+    } else if (overallSentiment === "positive") {
+        summary = "Speech leans positive.";
+    }
+
+    return {
+        transcript,
+        overallSentiment,
+        overallSentimentScore,
+        soundingLow,
+        summary,
+        segments: segments.map((s) => ({
+            text: s.text,
+            sentiment: s.sentiment,
+            sentimentScore: s.sentiment_score,
+        })),
+    };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Health check                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -154,6 +246,30 @@ app.post("/api/voice-chat", upload.single("audio"), async (req, res) => {
         });
     } catch (err: any) {
         console.error("Voice chat error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/* ------------------------------------------------------------------ */
+/*  Speech diagnosis — audio in, transcript + sentiment diagnosis out   */
+/* ------------------------------------------------------------------ */
+
+app.post("/api/speech-diagnosis", upload.single("audio"), async (req, res) => {
+    try {
+        if (!req.file) {
+            res.status(400).json({ error: "No audio file provided. Send as multipart/form-data with field 'audio'." });
+            return;
+        }
+
+        const contentType = req.file.mimetype || "audio/webm";
+        console.log(`  [Speech diagnosis] Analyzing ${req.file.size} bytes (${contentType})...`);
+
+        const diagnosis = await getSpeechDiagnosis(req.file.buffer, contentType);
+        console.log(`  [Speech diagnosis] Sentiment: ${diagnosis.overallSentiment} (${diagnosis.overallSentimentScore.toFixed(2)}), soundingLow: ${diagnosis.soundingLow}`);
+
+        res.json(diagnosis);
+    } catch (err: any) {
+        console.error("Speech diagnosis error:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -259,9 +375,10 @@ systemPromptReady.then(() => {
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n  Elder Care Agent API running on http://localhost:${PORT}`);
     console.log(`  Endpoints:`);
-    console.log(`    POST /api/voice-chat — voice conversation (audio in, audio+text out)`);
-    console.log(`    POST /api/tts        — text to speech`);
-    console.log(`    POST /api/chat       — streaming text chat`);
-    console.log(`    POST /api/generate   — non-streaming text chat`);
-    console.log(`    GET  /api/health     — health check\n`);
+    console.log(`    POST /api/voice-chat      — voice conversation (audio in, audio+text out)`);
+    console.log(`    POST /api/speech-diagnosis — speech analysis: sentiment, sounding low`);
+    console.log(`    POST /api/tts             — text to speech`);
+    console.log(`    POST /api/chat            — streaming text chat`);
+    console.log(`    POST /api/generate        — non-streaming text chat`);
+    console.log(`    GET  /api/health          — health check\n`);
 });
