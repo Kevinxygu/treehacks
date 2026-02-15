@@ -1,23 +1,36 @@
 import { API_URL, FASTAPI_URL } from "@env";
 
 // ------------------------------------------------------------------
-// API Configuration (from .env). For physical device testing, set
-// API_URL to your machine's local IP (e.g. http://10.x.x.x:3001).
+// API Configuration
+// Loaded from .env file for local development
 // ------------------------------------------------------------------
-const API_BASE = __DEV__
-    ? API_URL
-    : "https://your-production-api.com";
+const API_BASE = __DEV__ ? API_URL : "https://your-production-api.com"; // production
 
-const FASTAPI_BASE = __DEV__
-    ? FASTAPI_URL
-    : "https://your-production-api.com";
+const FASTAPI_BASE = __DEV__ ? FASTAPI_URL : "https://your-production-api.com";
 
 // ---------- Types ----------
+
+export interface CardItem {
+    id?: string;
+    title: string;
+    subtitle?: string;
+    [key: string]: unknown;
+}
+
+export interface ResponseCard {
+    type: "ride_options" | "medications" | "contacts" | "bills";
+    title: string;
+    items?: CardItem[];
+    data?: Record<string, unknown>;
+}
 
 export interface VoiceChatResult {
     transcript: string;
     response: string;
     audioBase64: string | null;
+    cards?: ResponseCard[];
+    /** Browserbase session live view URL — when present, user can watch the browser session. */
+    liveViewUrl?: string;
 }
 
 export interface ChatMessage {
@@ -101,11 +114,7 @@ export interface AnalysisResult {
 /**
  * Send a transcript to the FastAPI backend for cognitive analysis.
  */
-export async function analyzeTranscript(
-    transcript: string,
-    sessionId: string = "",
-    sessionDate: string = "",
-): Promise<AnalysisResult> {
+export async function analyzeTranscript(transcript: string, sessionId: string = "", sessionDate: string = ""): Promise<AnalysisResult> {
     const res = await fetch(`${FASTAPI_BASE}/analyze-transcript-ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

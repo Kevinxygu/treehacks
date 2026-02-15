@@ -28,3 +28,5 @@ export const allTools = {
 };
 
 export type AllTools = typeof allTools;
+
+export { getRemoteTools } from "./remoteTools.js";

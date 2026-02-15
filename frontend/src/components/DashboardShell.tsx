@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Brain, MessageSquareText, Bell, User, ChevronRight, Settings, LogIn, LogOut } from "lucide-react";
+import { LayoutDashboard, Brain, MessageSquareText, Bell, User, ChevronRight, Settings } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { DashboardUserProvider } from "@/contexts/DashboardUserContext";
@@ -69,29 +69,13 @@ export default function DashboardShell({ children, user, profile }: { children: 
                             </button>
                             <div className="w-px h-6 bg-gray-200 mx-1" />
                             <div className="flex items-center gap-3 pl-2">
-                                {user ? (
-                                    <>
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                                            <p className="text-xs text-gray-500">{profile?.email ?? user.email ?? "Signed in"}</p>
-                                        </div>
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-care-blue to-care-purple flex items-center justify-center overflow-hidden">
-                                            {user.picture ? <img src={user.picture} alt="" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-white" />}
-                                        </div>
-                                        <a
-                                            href="/auth/logout"
-                                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            Log out
-                                        </a>
-                                    </>
-                                ) : (
-                                    <a href="/auth/login" className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-care-blue hover:bg-care-blue/90 transition-colors">
-                                        <LogIn className="w-4 h-4" />
-                                        Log in
-                                    </a>
-                                )}
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                                    <p className="text-xs text-gray-500">{profile?.email ?? "Caregiver"}</p>
+                                </div>
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-care-blue to-care-purple flex items-center justify-center overflow-hidden">
+                                    <User className="w-4 h-4 text-white" />
+                                </div>
                             </div>
                         </div>
                     </div>
