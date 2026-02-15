@@ -126,10 +126,12 @@ export default function LandingPage({ user }: { user: LandingPageUser | null }) 
                                 <Button className="bg-care-blue hover:bg-care-blue/90 text-white text-sm">Dashboard</Button>
                             </Link>
                         ) : (
-                            <a href="/auth/login" className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-care-blue hover:bg-care-blue/90 transition-colors">
-                                <LogIn className="w-4 h-4" />
-                                Log in
-                            </a>
+                            <Link href="/dashboard">
+                                <Button className="bg-care-blue hover:bg-care-blue/90 text-white text-sm gap-2">
+                                    <LogIn className="w-4 h-4" />
+                                    Dashboard
+                                </Button>
+                            </Link>
                         )}
                     </div>
                 </div>

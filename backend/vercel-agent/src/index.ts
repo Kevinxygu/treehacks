@@ -5,8 +5,13 @@ import multer from "multer";
 import { ObjectId } from "mongodb";
 import { streamText, generateText } from "ai";
 import { createModel, getSystemPrompt } from "./agent.js";
-import { allTools } from "./tools/index.js";
+import { allTools, getRemoteTools } from "./tools/index.js";
 import { getDb } from "./db.js";
+
+const tools = process.env.TOOLS_SERVERLESS_URL ? getRemoteTools(process.env.TOOLS_SERVERLESS_URL) : allTools;
+if (process.env.TOOLS_SERVERLESS_URL) {
+    console.log("  Using remote tools at", process.env.TOOLS_SERVERLESS_URL);
+}
 
 const app = express();
 app.use(cors());
@@ -556,7 +561,7 @@ app.post("/api/voice-chat", upload.single("audio"), async (req, res) => {
             model,
             system: systemPrompt,
             messages,
-            tools: allTools,
+            tools,
             maxSteps: 10,
         });
         const aiResponse = result.text;
@@ -629,7 +634,7 @@ app.post("/api/chat", async (req, res) => {
             model,
             system: systemPrompt,
             messages,
-            tools: allTools,
+            tools,
             maxSteps: 10,
             onError: (err) => {
                 console.error("Stream error:", err);
@@ -662,7 +667,7 @@ app.post("/api/generate", async (req, res) => {
             model,
             system: systemPrompt,
             messages,
-            tools: allTools,
+            tools,
             maxSteps: 10,
         });
 
@@ -698,5 +703,9 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`    POST /api/voice-chat — voice conversation (audio in, audio+text out)`);
     console.log(`    POST /api/tts        — text to speech`);
     console.log(`    POST /api/chat       — streaming text chat`);
-    console.log(`    POST /api/generate   — non-streaming text chat\n`);
+    console.log(`    POST /api/generate   — non-streaming text chat`);
+    if (process.env.TOOLS_SERVERLESS_URL) {
+        console.log(`    (tools run remotely at ${process.env.TOOLS_SERVERLESS_URL})`);
+    }
+    console.log("");
 });

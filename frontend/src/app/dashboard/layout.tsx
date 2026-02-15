@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { auth0 } from "@/lib/auth0";
 import DashboardShell from "@/components/DashboardShell";
 import type { UserProfile } from "@/lib/config-api";
 import type { DbProfile } from "@/components/DashboardShell";
@@ -24,16 +22,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [session, profile] = await Promise.all([
-    auth0.getSession(),
-    getDbProfile(),
-  ]);
-  if (!session?.user) {
-    redirect("/auth/login");
-  }
+  const profile = await getDbProfile();
 
   return (
-    <DashboardShell user={session.user} profile={profile as DbProfile | null}>
+    <DashboardShell user={null} profile={profile as DbProfile | null}>
       {children}
     </DashboardShell>
   );
