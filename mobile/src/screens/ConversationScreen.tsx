@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
@@ -8,42 +8,89 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { Colors } from "../constants/colors";
-import { voiceChat, analyzeTranscript, type ChatMessage } from "../services/api";
+import { voiceChat, analyzeTranscript, type ChatMessage, type ResponseCard } from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Conversation">;
 
 // ---------- Types ----------
 
 interface Message {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  timestamp: string;
+    id: string;
+    role: "user" | "assistant";
+    text: string;
+    timestamp: string;
+    /** Optional cards from the backend (ride options, medications, contacts, bills, weather, meetings). */
+    cards?: ResponseCard[];
+    /** When set, show a "Watch live" button to open Browserbase session live view. */
+    liveViewUrl?: string;
 }
 
 // ---------- Typing dots ----------
 
 function TypingDots() {
-  const dots = [useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current];
+    const dots = [useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current];
 
-  useEffect(() => {
-    const anims = dots.map((dot, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 200),
-          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
-        ]),
-      ),
+    useEffect(() => {
+        const anims = dots.map((dot, i) =>
+            Animated.loop(
+                Animated.sequence([
+                    Animated.delay(i * 200),
+                    Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+                ]),
+            ),
+        );
+        anims.forEach((a) => a.start());
+        return () => anims.forEach((a) => a.stop());
+    }, []);
+
+    return (
+        <View style={styles.typingRow}>
+            {dots.map((opacity, i) => (
+                <Animated.View key={i} style={[styles.typingDot, { opacity }]} />
+            ))}
+        </View>
     );
-    anims.forEach((a) => a.start());
-    return () => anims.forEach((a) => a.stop());
-  }, []);
+}
 
+// ---------- Card block (ride options, medications, contacts, bills, weather, meetings) ----------
+
+function MessageCards({ cards }: { cards: ResponseCard[] }) {
   return (
-    <View style={styles.typingRow}>
-      {dots.map((opacity, i) => (
-        <Animated.View key={i} style={[styles.typingDot, { opacity }]} />
+    <View style={styles.cardsContainer}>
+      {cards.map((card, idx) => (
+        <View key={`${card.type}-${idx}`} style={styles.cardBlock}>
+          <Text style={styles.cardBlockTitle}>{card.title}</Text>
+          {card.type === "weather" && card.data?.location ? (
+            <Text style={styles.cardItemSubtitle}>{String(card.data.location)}</Text>
+          ) : null}
+          {card.type === "meeting_booked" && card.data ? (
+            <>
+              {(card.data.message || card.data.localTime) ? (
+                <Text style={styles.cardItemSubtitle}>
+                  {String(card.data.message ?? card.data.localTime ?? "")}
+                </Text>
+              ) : null}
+              {card.data.meetingUrl ? (
+                <TouchableOpacity onPress={() => Linking.openURL(String(card.data!.meetingUrl))} style={styles.cardLink}>
+                  <Text style={styles.cardLinkText}>Open meeting link</Text>
+                </TouchableOpacity>
+              ) : null}
+            </>
+          ) : null}
+          {card.items && card.items.length > 0 ? (
+            card.items.map((item, i) => (
+              <View key={item.id ?? i} style={styles.cardItem}>
+                <Text style={styles.cardItemTitle}>{item.title}</Text>
+                {item.subtitle ? <Text style={styles.cardItemSubtitle}>{item.subtitle}</Text> : null}
+              </View>
+            ))
+          ) : !card.data?.localTime && !card.data?.message && (card.data?.pickup || card.data?.destination) ? (
+            <Text style={styles.cardItemSubtitle}>
+              {[card.data.pickup, card.data.destination].filter(Boolean).join(" → ")}
+            </Text>
+          ) : null}
+        </View>
       ))}
     </View>
   );
@@ -52,8 +99,8 @@ function TypingDots() {
 // ---------- Conversation Screen ----------
 
 export default function ConversationScreen() {
-  const navigation = useNavigation<Nav>();
-  const flatListRef = useRef<FlatList>(null);
+    const navigation = useNavigation<Nav>();
+    const flatListRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -181,13 +228,15 @@ export default function ConversationScreen() {
 
         setIsProcessing(false);
 
-        // Add assistant response
+        // Add assistant response (with optional cards)
         if (result.response) {
           const assistantMsg: Message = {
             id: `ai-${Date.now()}`,
             role: "assistant",
             text: result.response,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            ...(result.cards && result.cards.length > 0 && { cards: result.cards }),
+            ...(result.liveViewUrl && { liveViewUrl: result.liveViewUrl }),
           };
           setMessages((prev) => [...prev, assistantMsg]);
 
@@ -276,6 +325,51 @@ export default function ConversationScreen() {
 
   // ---------- Render ----------
 
+  const renderCard = (card: ResponseCard) => {
+    if (card.type === "ride_options" && card.data) {
+      const pickup = card.data.pickup as string | undefined;
+      const destination = card.data.destination as string | undefined;
+      const prices = card.data.prices as string | undefined;
+      if (card.items && card.items.length > 0) {
+        return (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{card.title}</Text>
+            {pickup && <Text style={styles.cardMeta}>From: {pickup}</Text>}
+            {destination && <Text style={styles.cardMeta}>To: {destination}</Text>}
+            {card.items.map((row, idx) => (
+              <TouchableOpacity key={row.id ?? idx} style={styles.cardItem} activeOpacity={0.7}>
+                <Text style={styles.cardItemTitle}>{row.title}</Text>
+                {row.subtitle ? <Text style={styles.cardItemSubtitle}>{row.subtitle}</Text> : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        );
+      }
+      return (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{card.title}</Text>
+          {pickup && <Text style={styles.cardMeta}>From: {pickup}</Text>}
+          {destination && <Text style={styles.cardMeta}>To: {destination}</Text>}
+          {prices && <Text style={styles.cardBody}>{typeof prices === "string" ? prices : JSON.stringify(prices)}</Text>}
+        </View>
+      );
+    }
+    if (card.items && card.items.length > 0) {
+      return (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{card.title}</Text>
+          {card.items.map((row, idx) => (
+            <TouchableOpacity key={row.id ?? idx} style={styles.cardItem} activeOpacity={0.7}>
+              <Text style={styles.cardItemTitle}>{row.title}</Text>
+              {row.subtitle ? <Text style={styles.cardItemSubtitle}>{row.subtitle}</Text> : null}
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    }
+    return null;
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
     return (
@@ -284,6 +378,7 @@ export default function ConversationScreen() {
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>{item.text}</Text>
           <Text style={[styles.bubbleTime, isUser ? styles.bubbleTimeUser : styles.bubbleTimeAssistant]}>{item.timestamp}</Text>
         </View>
+        {!isUser && item.cards && item.cards.length > 0 ? <MessageCards cards={item.cards} /> : null}
       </View>
     );
   };
@@ -354,37 +449,37 @@ export default function ConversationScreen() {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
+    container: { flex: 1 },
+    safe: { flex: 1 },
 
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: Colors.glassWhiteSubtle,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backArrow: { fontSize: 24, color: Colors.gray600 },
-  headerPill: {
-    backgroundColor: Colors.glassWhiteSubtle,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "600", color: Colors.gray700 },
+    // Header
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    backButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        backgroundColor: Colors.glassWhiteSubtle,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    backArrow: { fontSize: 24, color: Colors.gray600 },
+    headerPill: {
+        backgroundColor: Colors.glassWhiteSubtle,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+    },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: Colors.gray700 },
 
   // Empty state
   emptyState: {
@@ -447,6 +542,22 @@ const styles = StyleSheet.create({
   bubbleTimeUser: { color: Colors.gray400 },
   bubbleTimeAssistant: { color: "rgba(255,255,255,0.6)" },
 
+  // Cards (ride options, medications, contacts, bills)
+  cardsContainer: { marginTop: 10, gap: 10, alignSelf: "flex-end", maxWidth: "85%" },
+  cardBlock: {
+    backgroundColor: Colors.glassWhite,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  cardBlockTitle: { fontSize: 15, fontWeight: "600", color: Colors.gray700, marginBottom: 8 },
+  cardItem: { paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: Colors.glassBorder },
+  cardItemTitle: { fontSize: 16, fontWeight: "500", color: Colors.gray800 },
+  cardItemSubtitle: { fontSize: 14, color: Colors.gray500, marginTop: 2 },
+  cardLink: { marginTop: 10, paddingVertical: 8 },
+  cardLinkText: { fontSize: 15, fontWeight: "600", color: Colors.careBlue },
+
   // Typing dots
   typingRow: {
     flexDirection: "row",
@@ -458,6 +569,56 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "rgba(74,144,226,0.5)",
   },
+    // Cards (tool result data)
+    cardsContainer: {
+        marginTop: 8,
+        width: "85%",
+        alignSelf: "flex-end",
+    },
+    card: {
+        backgroundColor: Colors.glassWhite,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+        overflow: "hidden",
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: Colors.gray700,
+        marginBottom: 8,
+    },
+    cardMeta: {
+        fontSize: 14,
+        color: Colors.gray600,
+        marginBottom: 4,
+    },
+    cardBody: {
+        fontSize: 14,
+        color: Colors.gray700,
+        lineHeight: 22,
+        marginTop: 6,
+    },
+    cardItem: {
+        backgroundColor: "rgba(255,255,255,0.8)",
+        borderRadius: 12,
+        padding: 12,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "rgba(0,0,0,0.06)",
+    },
+    cardItemTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: Colors.gray800,
+    },
+    cardItemSubtitle: {
+        fontSize: 14,
+        color: Colors.gray500,
+        marginTop: 2,
+    },
 
   // Bottom controls
   bottomControls: {

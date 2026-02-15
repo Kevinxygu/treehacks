@@ -19,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { fetchAllSessions, type SessionEntry } from "@/lib/api";
+import { useDashboardUserName } from "@/contexts/DashboardUserContext";
 
 interface TranscriptEntry {
   id: number;
@@ -49,6 +50,13 @@ function parseTranscriptToEntries(transcript: string): TranscriptEntry[] {
 export default function TranscriptPage() {
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { displayName, firstName } = useDashboardUserName();
+  const initials = displayName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "?";
   const [selectedConversation, setSelectedConversation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime] = useState("--:--:--");
@@ -270,7 +278,7 @@ export default function TranscriptPage() {
                             : "bg-care-blue/15 text-care-blue"
                             }`}
                         >
-                          {entry.speaker === "user" ? "MT" : "AI"}
+                          {entry.speaker === "user" ? initials : "AI"}
                         </div>
                       </div>
 
@@ -279,7 +287,7 @@ export default function TranscriptPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium text-gray-500">
                             {entry.speaker === "user"
-                              ? "Margaret"
+                              ? firstName
                               : "Bloom"}
                           </span>
                           <span className="text-xs text-gray-300">
@@ -287,7 +295,9 @@ export default function TranscriptPage() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-800 leading-relaxed">
-                          {entry.text}
+                          {entry.speaker === "assistant"
+                            ? entry.text.replace(/Margaret/g, firstName)
+                            : entry.text}
                         </p>
 
                         {/* Markers */}

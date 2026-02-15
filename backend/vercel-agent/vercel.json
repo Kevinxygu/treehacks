@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "functions": {
+    "api/tools/run.ts": { "maxDuration": 120 }
+  }
+}

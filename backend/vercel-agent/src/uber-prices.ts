@@ -42,7 +42,7 @@ try {
 
 const page = stagehand.context.pages()[0];
 console.log("Navigating to Uber (already authenticated via context)...");
-await page.goto("https://m.uber.com", { waitUntil: "domcontentloaded", timeout: 30000 });
+await page.goto("https://m.uber.com", { waitUntil: "domcontentloaded", timeoutMs: 30000 });
 await page.waitForTimeout(5000);
 
 // Use agent to find prices

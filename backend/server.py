@@ -61,6 +61,12 @@ async def root():
     # 3. Return a dictionary (FastAPI converts this to JSON automatically)
     return {"message": "Hello World"}
 
+
+@app.get("/health")
+async def health():
+    """Health check for analytics service (mobile/frontend can ping this)."""
+    return {"ok": True, "service": "analytics"}
+
 @app.get("/vital-api")
 async def root():
     response = callVitalApi('test.webm')
@@ -125,8 +131,35 @@ async def analyze_single_transcript(req: TranscriptRequest):
 async def analyze_single_transcript_ai(req: TranscriptRequest):
     """Analyze a transcript with rule-based scoring + Claude AI summary and interventions."""
     rule_based = analyze_transcript(req.transcript, req.session_id, req.session_date)
-    ai_result = generate_summary(rule_based)
-    result = {**ai_result, "rule_based": rule_based}
+    if os.getenv("ANTHROPIC_API_KEY"):
+        try:
+            ai_result = generate_summary(rule_based)
+            result = {**ai_result, "rule_based": rule_based}
+        except Exception as e:
+            err_str = str(e)
+            print("Analytics AI summary failed:", e)
+            if "401" in err_str or "invalid x-api-key" in err_str or "authentication_error" in err_str:
+                print("  → Fix: set a valid ANTHROPIC_API_KEY in backend/.env (get one at https://console.anthropic.com)")
+            fallback = rule_based.get("summary", "Analysis complete. AI summary unavailable.")
+            if "401" in err_str or "invalid x-api-key" in err_str:
+                fallback = fallback + " (Claude API key invalid — set ANTHROPIC_API_KEY in backend/.env)"
+            result = {
+                "ai_summary": fallback,
+                "risk_score": rule_based.get("risk_score", 0),
+                "rule_based_summary": rule_based.get("summary", ""),
+                "session_id": rule_based.get("session_id", ""),
+                "session_date": rule_based.get("session_date", ""),
+                "rule_based": rule_based,
+            }
+    else:
+        result = {
+            "ai_summary": rule_based.get("summary", "Analysis complete. Set ANTHROPIC_API_KEY in backend/.env for AI-generated insights."),
+            "risk_score": rule_based.get("risk_score", 0),
+            "rule_based_summary": rule_based.get("summary", ""),
+            "session_id": rule_based.get("session_id", ""),
+            "session_date": rule_based.get("session_date", ""),
+            "rule_based": rule_based,
+        }
 
     # Auto-save to in-memory session store
     _sessions.append({
@@ -176,7 +209,19 @@ async def get_preventative_care_recommendations_endpoint(req: PreventativeCareRe
     """
     Generates preventative care recommendations based on provided summaries.
     """
-    recommendations = get_preventative_care_recommendations(
-        req.ai_summary,
-    )
-    return recommendations
+    try:
+        recommendations = get_preventative_care_recommendations(req.ai_summary)
+        return recommendations
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "invalid x-api-key" in err_str or "AuthenticationError" in err_str:
+            print("Preventative care API key error:", e)
+            print("  → Set valid ANTHROPIC_API_KEY in backend/.env")
+        return [
+            {
+                "Action title": "Check API key",
+                "Action explanation": "Claude API key invalid or missing. Set ANTHROPIC_API_KEY in backend/.env and restart the backend.",
+                "Action reason": "Backend could not generate recommendations.",
+                "Time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        ]
