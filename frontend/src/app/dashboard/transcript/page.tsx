@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,10 @@ import {
   Search,
   Filter,
   Volume2,
+  Loader2,
+  FileText,
 } from "lucide-react";
+import { fetchAllSessions, type SessionEntry } from "@/lib/api";
 
 interface TranscriptEntry {
   id: number;
@@ -29,195 +32,88 @@ interface TranscriptEntry {
   }>;
 }
 
-const conversationList = [
-  {
-    id: 1,
-    date: "Feb 14, 2026",
-    time: "8:02 AM",
-    duration: "12 min",
-    markers: 5,
-    sentiment: "Neutral",
-    summary: "Morning check-in with medication reminder and stretches",
-  },
-  {
-    id: 2,
-    date: "Feb 13, 2026",
-    time: "2:15 PM",
-    duration: "8 min",
-    markers: 1,
-    sentiment: "Positive",
-    summary: "Discussion about daughter's upcoming visit",
-  },
-  {
-    id: 3,
-    date: "Feb 13, 2026",
-    time: "7:45 PM",
-    duration: "5 min",
-    markers: 0,
-    sentiment: "Calm",
-    summary: "Evening routine and sleep medication reminder",
-  },
-  {
-    id: 4,
-    date: "Feb 12, 2026",
-    time: "9:00 AM",
-    duration: "15 min",
-    markers: 0,
-    sentiment: "Joyful",
-    summary: "Reminiscence therapy - Cape Cod vacation photos",
-  },
-  {
-    id: 5,
-    date: "Feb 12, 2026",
-    time: "3:30 PM",
-    duration: "6 min",
-    markers: 3,
-    sentiment: "Confused",
-    summary: "Medication refill request, some confusion about insurance",
-  },
-];
-
-const transcript: TranscriptEntry[] = [
-  {
-    id: 1,
-    speaker: "assistant",
-    text: "Good morning, Margaret! How are you feeling today?",
-    timestamp: "8:02:00",
-  },
-  {
-    id: 2,
-    speaker: "user",
-    text: "Oh, good morning! I slept pretty well. A little stiff this morning though.",
-    timestamp: "8:02:15",
-  },
-  {
-    id: 3,
-    speaker: "assistant",
-    text: "I'm glad you slept well! A little stiffness is normal. Would you like me to remind you about your morning stretches? Also, don't forget — you have your medication at 8:30.",
-    timestamp: "8:02:22",
-  },
-  {
-    id: 4,
-    speaker: "user",
-    text: "Oh yes, the stretches would be nice. And thank you for the reminder about my pills.",
-    timestamp: "8:02:45",
-  },
-  {
-    id: 5,
-    speaker: "assistant",
-    text: "Of course! Let's start with some gentle neck rolls. Turn your head slowly to the right... hold for 5 seconds... now slowly to the left. You're doing great!",
-    timestamp: "8:03:00",
-  },
-  {
-    id: 6,
-    speaker: "user",
-    text: "That feels good. Oh, when is... um... when is Sarah coming to visit?",
-    timestamp: "8:04:12",
-    markers: [
-      {
-        type: "warning",
-        label: "word-finding difficulty",
-        detail: "2.3s pause before 'Sarah'",
-      },
-    ],
-  },
-  {
-    id: 7,
-    speaker: "assistant",
-    text: "Sarah is coming to visit on Saturday at 2:00 PM. That's in 2 days! She mentioned she'd bring the grandkids too.",
-    timestamp: "8:04:20",
-  },
-  {
-    id: 8,
-    speaker: "user",
-    text: "Oh wonderful! I need to... I need to get the... the thing... you know, the thing for the kids.",
-    timestamp: "8:04:35",
-    markers: [
-      {
-        type: "warning",
-        label: "word-finding difficulty",
-        detail: "4.1s pause, used 'thing' as placeholder (anomia)",
-      },
-    ],
-  },
-  {
-    id: 9,
-    speaker: "assistant",
-    text: "Do you mean the cookies? You mentioned last time wanting to bake cookies for the grandkids!",
-    timestamp: "8:04:48",
-  },
-  {
-    id: 10,
-    speaker: "user",
-    text: "Yes! The cookies! That's exactly it. I always make them the chocolate chip ones.",
-    timestamp: "8:05:02",
-    markers: [
-      {
-        type: "success",
-        label: "clear long-term memory",
-        detail: "Recalled baking tradition and specific recipe preference",
-      },
-    ],
-  },
-  {
-    id: 11,
-    speaker: "user",
-    text: "Oh, when is Sarah coming? Is it this weekend?",
-    timestamp: "8:06:15",
-    markers: [
-      {
-        type: "warning",
-        label: "repeated question",
-        detail: "2nd occurrence — previously asked at 8:04:12",
-      },
-    ],
-  },
-  {
-    id: 12,
-    speaker: "assistant",
-    text: "Yes, Sarah is coming this Saturday at 2:00 PM — that's in just 2 days! And the grandkids are coming too. Perfect time for those chocolate chip cookies!",
-    timestamp: "8:06:22",
-  },
-  {
-    id: 13,
-    speaker: "user",
-    text: "When is Sarah visiting again?",
-    timestamp: "8:08:30",
-    markers: [
-      {
-        type: "warning",
-        label: "repeated question",
-        detail: "3rd occurrence — asked at 8:04:12, 8:06:15, 8:08:30",
-      },
-    ],
-  },
-  {
-    id: 14,
-    speaker: "assistant",
-    text: "Sarah will be here on Saturday at 2:00 PM, just 2 days from now! I've added it to your calendar so you won't forget. Would you like me to set a reminder for Saturday morning?",
-    timestamp: "8:08:38",
-  },
-];
-
-const analysisSummary = {
-  overall: "Moderate concern — showing increased short-term memory lapses and word-finding difficulties compared to previous sessions.",
-  concerns: [
-    "3 repeated questions about the same event within 4 minutes",
-    "2 significant word-finding pauses (anomia indicators)",
-    "Increased use of placeholder words ('thing', 'stuff')",
-  ],
-  positives: [
-    "Long-term memory remains strong (recalled baking tradition)",
-    "Emotional engagement is normal and appropriate",
-    "Morning routine compliance is consistent",
-    "Engaged positively with physical activity (stretches)",
-  ],
-};
+function parseTranscriptToEntries(transcript: string): TranscriptEntry[] {
+  if (!transcript) return [];
+  return transcript.split("\n").filter(Boolean).map((line, i) => {
+    const isUser = line.startsWith("User:");
+    const text = line.replace(/^(User|Assistant):\s*/, "");
+    return {
+      id: i + 1,
+      speaker: isUser ? "user" : "assistant",
+      text,
+      timestamp: "",
+    };
+  });
+}
 
 export default function TranscriptPage() {
+  const [sessions, setSessions] = useState<SessionEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackTime] = useState("8:02:00");
+  const [playbackTime] = useState("--:--:--");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await fetchAllSessions();
+        setSessions(data.reverse()); // newest first
+      } catch (err) {
+        console.error("Failed to fetch sessions:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-500">Loading transcripts...</span>
+      </div>
+    );
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto text-center py-20">
+        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">No Transcripts</h2>
+        <p className="text-gray-500">Start a conversation on the mobile app to see transcripts here.</p>
+      </div>
+    );
+  }
+
+  const selectedSession = sessions[selectedConversation];
+  const transcript = parseTranscriptToEntries(selectedSession?.transcript || "");
+  const conversationList = sessions.map((s, i) => {
+    const markerCount = s.analysis_result?.rule_based?.markers?.filter((m) => m.flagged).length ?? 0;
+    return {
+      id: i,
+      date: s.session_date || new Date(s.timestamp).toLocaleDateString(),
+      time: new Date(s.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      duration: `${s.analysis_result?.rule_based?.total_words ?? 0} words`,
+      markers: markerCount,
+      sentiment: markerCount === 0 ? "Normal" : "Flagged",
+      summary: s.analysis_result?.rule_based_summary || "Session recorded",
+    };
+  });
+
+  // Build analysis summary from selected session's AI data
+  const analysisResult = selectedSession?.analysis_result;
+  const flaggedMarkers = analysisResult?.rule_based?.markers?.filter((m) => m.flagged) || [];
+  const normalMarkers = analysisResult?.rule_based?.markers?.filter((m) => !m.flagged) || [];
+  const analysisSummary = {
+    overall: analysisResult?.rule_based_summary || "No analysis available.",
+    concerns: flaggedMarkers.map(
+      (m) => `${m.marker.replace(/_/g, " ")}: ${m.evidence?.[0] || `value ${m.value} exceeds threshold ${m.threshold}`}`
+    ),
+    positives: normalMarkers.slice(0, 4).map(
+      (m) => `${m.marker.replace(/_/g, " ")} within normal range (${m.value})`
+    ),
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -311,16 +207,16 @@ export default function TranscriptPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Clock className="w-4 h-4" />
-                    Feb 14, 2026 at 8:02 AM
+                    {conversationList[selectedConversation]?.date} at {conversationList[selectedConversation]?.time}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <MessageCircle className="w-4 h-4" />
-                    12 min duration
+                    {conversationList[selectedConversation]?.duration}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className="bg-amber-100 text-amber-700">
-                    5 markers
+                    {conversationList[selectedConversation]?.markers ?? 0} markers
                   </Badge>
                 </div>
               </div>

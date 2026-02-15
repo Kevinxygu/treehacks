@@ -1,8 +1,10 @@
+"use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { fetchPreventativeCare } from "@/lib/api";
 
 interface PreventativeCareRecommendation {
   "Action title": string;
@@ -11,28 +13,38 @@ interface PreventativeCareRecommendation {
   Time: string;
 }
 
-// Hardcoded recommendations data
-const hardcodedRecommendations: PreventativeCareRecommendation[] = [
-  {
-    "Action title": "General Cognitive Workout: Verb Network Strengthening (VNeST)",
-    "Action explanation": "You will be given a high-level verb such as 'Synthesize.' Provide three distinct Agent-Patient pairs (who performs the action and what is acted upon), then expand one pair into a full sentence specifying When, Where, and Why. This exercise strengthens the verb-argument network that underpins flexible, precise language production.",
-    "Action reason": "Triage classified this session as Case B (Baseline Performance). Speech was fluid, lexically diverse (TTR 0.696), and cognitively dense with zero filler words, zero hedge phrases, and minimal pronoun reliance. A two-task General Cognitive Workout is prescribed to maintain high-level executive function and semantic retrieval speed.",
-    "Time": "2026-02-14 20:31:25"
-  },
-  {
-    "Action title": "General Cognitive Workout: Semantic Feature Analysis (SFA)",
-    "Action explanation": "You will be presented with a moderately complex object. Your task is to generate its Group (category), Use (function), Action (what it does or what you do with it), Properties (physical and abstract attributes), Location (where it is typically found), and Association (a related concept or memory). Aim for precise, technical descriptors rather than general terms.",
-    "Action reason": "With all cognitive-linguistic markers in the normal range and a risk score of only 3.3 out of 100, the full three-task rehabilitative protocol is not warranted. However, maintaining robust semantic networks is critical for long-term cognitive reserve. SFA challenges detailed feature retrieval and categorical reasoning, complementing the verb-focused demands of VNeST to provide a well-rounded executive-function workout.",
-    "Time": "2026-02-14 20:31:25"
-  }
-];
-
 interface PreventativeCareRecommendationsProps {
-  sessionResults?: unknown;
+  sessionResults?: { ai_summary?: string } | null;
 }
 
-export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = () => {
-  // sessionResults is not directly used in this hardcoded version, but can be passed for context if needed.
+export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommendationsProps> = ({ sessionResults }) => {
+  const [recommendations, setRecommendations] = useState<PreventativeCareRecommendation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const aiSummary = sessionResults?.ai_summary;
+    if (!aiSummary) return;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPreventativeCare(aiSummary!);
+        if (Array.isArray(data)) {
+          setRecommendations(data);
+        } else if (data?.recommendations) {
+          setRecommendations(data.recommendations);
+        }
+      } catch (err) {
+        console.error("Failed to fetch recommendations:", err);
+        setError("Could not load recommendations.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [sessionResults?.ai_summary]);
 
   return (
     <Card className="border-0 shadow-sm bg-white">
@@ -43,9 +55,19 @@ export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommend
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-4"> {/* Simplified to force single-column vertical stack */}
-          {hardcodedRecommendations.map((rec, index) => (
-            <Card key={index} className="border-gray-200 shadow-sm"> {/* Card styling remains */}
+        {loading && (
+          <div className="flex items-center gap-2 py-4">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            <span className="text-sm text-gray-500">Generating recommendations...</span>
+          </div>
+        )}
+        {error && <p className="text-sm text-red-500 py-2">{error}</p>}
+        {!loading && !error && recommendations.length === 0 && (
+          <p className="text-sm text-gray-400 py-2">No recommendations available. Complete a session to generate recommendations.</p>
+        )}
+        <div className="grid grid-cols-1 gap-4">
+          {recommendations.map((rec, index) => (
+            <Card key={index} className="border-gray-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-md font-semibold">{rec["Action title"]}</CardTitle>
               </CardHeader>

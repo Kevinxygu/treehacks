@@ -17,10 +17,11 @@ import {
   Battery,
   Moon,
   Zap,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -28,6 +29,13 @@ import {
   Bar,
   ResponsiveContainer,
 } from "recharts";
+import {
+  fetchAllSessions,
+  fetchWhoopRecovery,
+  fetchWhoopSleep,
+  fetchWhoopCycle,
+  type SessionEntry,
+} from "@/lib/api";
 
 function CircularProgress({
   value,
@@ -94,16 +102,6 @@ function CircularProgress({
   );
 }
 
-const cognitiveData = [
-  { day: "Mon", score: 72 },
-  { day: "Tue", score: 70 },
-  { day: "Wed", score: 68 },
-  { day: "Thu", score: 65 },
-  { day: "Fri", score: 68 },
-  { day: "Sat", score: 71 },
-  { day: "Sun", score: 68 },
-];
-
 const activityData = [
   { day: "Mon", steps: 3200 },
   { day: "Tue", steps: 4100 },
@@ -112,65 +110,6 @@ const activityData = [
   { day: "Fri", steps: 4500 },
   { day: "Sat", steps: 2100 },
   { day: "Sun", steps: 3400 },
-];
-
-const alerts = [
-  {
-    level: "warning",
-    title: "Increased word-finding pauses",
-    description: "5 instances detected in last conversation",
-    time: "2 hours ago",
-  },
-  {
-    level: "warning",
-    title: "Repeated questions",
-    description: "Same question asked 3 times in 4 minutes",
-    time: "2 hours ago",
-  },
-  {
-    level: "success",
-    title: "Medication taken on time",
-    description: "Morning medications confirmed at 8:32 AM",
-    time: "6 hours ago",
-  },
-];
-
-const recentConversations = [
-  {
-    id: 1,
-    time: "8:02 AM Today",
-    duration: "12 min",
-    summary: "Morning check-in, medication reminder, gentle stretches",
-    markers: 2,
-  },
-  {
-    id: 2,
-    time: "2:15 PM Yesterday",
-    duration: "8 min",
-    summary: "Asked about daughter Sarah's visit, discussed weekend plans",
-    markers: 1,
-  },
-  {
-    id: 3,
-    time: "7:45 PM Yesterday",
-    duration: "5 min",
-    summary: "Evening routine, sleep medication reminder",
-    markers: 0,
-  },
-  {
-    id: 4,
-    time: "9:00 AM Yesterday",
-    duration: "15 min",
-    summary: "Reminiscence therapy - looked at vacation photos from 2019",
-    markers: 0,
-  },
-  {
-    id: 5,
-    time: "3:30 PM 2 days ago",
-    duration: "6 min",
-    summary: "Medication refill request, insurance confirmation",
-    markers: 3,
-  },
 ];
 
 const upcomingEvents = [
@@ -251,12 +190,91 @@ function MetricCard({
 }
 
 export default function DashboardOverview() {
-  const [whoopData] = useState({
-    sleep: 85,
-    recovery: 72,
-    strain: 4.2,
-    strainPercent: 32,
+  const [whoopData, setWhoopData] = useState({ sleep: 0, recovery: 0, strainPercent: 0 });
+  const [sessions, setSessions] = useState<SessionEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [sessionsData, recoveryData, sleepData, cycleData] = await Promise.all([
+          fetchAllSessions(),
+          fetchWhoopRecovery().catch(() => null),
+          fetchWhoopSleep().catch(() => null),
+          fetchWhoopCycle().catch(() => null),
+        ]);
+        setSessions(sessionsData);
+
+        // Extract latest whoop values
+        const latestRecovery = recoveryData?.records?.[0]?.score?.recovery_score ?? 0;
+        const latestSleep = sleepData?.records?.[0]?.score?.sleep_performance_percentage ?? 0;
+        const latestStrain = cycleData?.records?.[0]?.score?.strain ?? 0;
+        // Normalize strain (max ~21) to percentage
+        const strainPercent = Math.round((latestStrain / 21) * 100);
+        setWhoopData({ recovery: Math.round(latestRecovery), sleep: Math.round(latestSleep), strainPercent });
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Derive cognitive chart data from sessions (risk scores over time)
+  const cognitiveData = sessions.map((s, i) => ({
+    day: s.session_date || `S${i + 1}`,
+    score: 100 - (s.analysis_result?.risk_score ?? 0), // invert: lower risk = higher cognitive score
+  }));
+
+  // Derive alerts from latest session's flagged markers
+  const latestSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+  const alerts: { level: string; title: string; description: string; time: string }[] = [];
+  if (latestSession?.analysis_result?.rule_based?.markers) {
+    const flagged = latestSession.analysis_result.rule_based.markers.filter((m) => m.flagged);
+    flagged.forEach((m) => {
+      alerts.push({
+        level: m.severity === "severe" ? "critical" : "warning",
+        title: `Flagged: ${m.marker.replace(/_/g, " ")}`,
+        description: m.evidence?.[0] || `Value: ${m.value} (threshold: ${m.threshold})`,
+        time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+      });
+    });
+  }
+  if (alerts.length === 0 && latestSession) {
+    alerts.push({
+      level: "success",
+      title: "All markers normal",
+      description: latestSession.analysis_result?.rule_based_summary || "No concerns detected",
+      time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+    });
+  }
+
+  // Derive recent conversations from sessions
+  const recentConversations = sessions.slice().reverse().slice(0, 5).map((s, i) => {
+    const markerCount = s.analysis_result?.rule_based?.markers?.filter((m) => m.flagged).length ?? 0;
+    return {
+      id: i + 1,
+      time: s.session_date || new Date(s.timestamp).toLocaleString(),
+      duration: `${s.analysis_result?.rule_based?.total_words ?? 0} words`,
+      summary: s.analysis_result?.rule_based_summary || "Session recorded",
+      markers: markerCount,
+    };
   });
+
+  // Latest cognitive score
+  const latestCogScore = latestSession
+    ? Math.round(100 - (latestSession.analysis_result?.risk_score ?? 0))
+    : null;
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-500">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -299,6 +317,9 @@ export default function DashboardOverview() {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
           Recent Alerts
         </h2>
+        {alerts.length === 0 && sessions.length === 0 ? (
+          <p className="text-sm text-gray-400 p-4">No sessions recorded yet. Start a conversation on the mobile app.</p>
+        ) : (
         <div className="grid gap-3">
           {alerts.map((alert, i) => (
             <div
@@ -342,20 +363,22 @@ export default function DashboardOverview() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Cognitive Score"
-          value="68"
+          value={latestCogScore !== null ? String(latestCogScore) : "--"}
           unit="/100"
-          trend="down"
-          trendValue="-4.2%"
+          trend={latestCogScore !== null && latestCogScore >= 65 ? "up" : "down"}
+          trendValue={latestCogScore !== null ? `Risk: ${latestSession?.analysis_result?.risk_score}` : "No data"}
           icon={Brain}
           color="#5B9A8B"
         >
           <div className="h-16">
+            {cognitiveData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={cognitiveData}>
                 <defs>
@@ -373,6 +396,9 @@ export default function DashboardOverview() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            ) : (
+              <p className="text-xs text-gray-400 pt-4">No sessions yet</p>
+            )}
           </div>
         </MetricCard>
 
@@ -414,27 +440,23 @@ export default function DashboardOverview() {
 
         <MetricCard
           title="Social Engagement"
-          value="8"
+          value={String(sessions.length || 0)}
           unit="conversations"
           trend="up"
-          trendValue="+2"
+          trendValue={sessions.length > 0 ? `${sessions.length} total` : "No data"}
           icon={MessageCircle}
           color="#E8B298"
         >
           <div className="flex items-center gap-2 mt-1">
-            {[4, 3, 5, 2, 4, 6, 3].map((val, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-sm bg-[#E8B298]/20"
-                  style={{ height: `${val * 6}px` }}
-                >
-                  <div
-                    className="w-full rounded-sm bg-[#E8B298]"
-                    style={{ height: `${val * 6}px`, opacity: 0.7 }}
-                  />
+            {(sessions.length > 0 ? sessions.slice(-7) : []).map((s, i) => {
+              const score = s.analysis_result?.risk_score ?? 0;
+              const h = Math.max(6, Math.min(36, score * 1.5));
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full rounded-sm bg-[#E8B298]" style={{ height: `${h}px`, opacity: 0.7 }} />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </MetricCard>
       </div>
@@ -458,6 +480,9 @@ export default function DashboardOverview() {
               </div>
             </CardHeader>
             <CardContent className="px-0">
+              {recentConversations.length === 0 ? (
+                <p className="text-sm text-gray-400 px-6 py-4">No conversations yet. Start a chat on the mobile app.</p>
+              ) : (
               <div className="divide-y divide-gray-50">
                 {recentConversations.map((conv) => (
                   <Link
@@ -493,6 +518,7 @@ export default function DashboardOverview() {
                   </Link>
                 ))}
               </div>
+              )}
             </CardContent>
           </Card>
         </div>
