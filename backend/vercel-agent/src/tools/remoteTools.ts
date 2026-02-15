@@ -1,40 +1,39 @@
-import { tool } from "ai";
-import type { z } from "zod";
-import { allTools } from "./index.js";
-
-const TOOLS_RUN_PATH = "/api/tools/run";
-
 /**
  * When TOOLS_SERVERLESS_URL is set, the main server uses these proxy tools:
  * same schema and description, but execute() calls the serverless endpoint.
  * That way the (heavy) tool logic runs on Vercel serverless while the
- * Express server runs normally elsewhere.
+ * main Express app can run on Vercel too or elsewhere.
  */
-export function getRemoteTools(baseUrl: string): typeof allTools {
-    const url = baseUrl.replace(/\/$/, "") + TOOLS_RUN_PATH;
-    const toolEntries = Object.entries(allTools) as [string, (typeof allTools)[keyof typeof allTools]][];
-    const remote = {} as typeof allTools;
+import type { AllTools } from "./index.js";
 
-    for (const [name, t] of toolEntries) {
-        const desc = t.description;
-        const params = t.parameters as z.ZodTypeAny;
-        remote[name as keyof typeof allTools] = tool({
-            description: desc,
-            parameters: params,
-            execute: async (args) => {
+const TOOLS_RUN_PATH = "/api/tools/run";
+
+function makeRemoteTools(baseUrl: string, toolMap: AllTools): AllTools {
+    const url = baseUrl.replace(/\/$/, "") + TOOLS_RUN_PATH;
+    const result: Record<string, { description: string; parameters: unknown; execute: (args: unknown) => Promise<unknown> }> = {};
+    for (const [name, tool] of Object.entries(toolMap)) {
+        const t = tool as { description: string; parameters: unknown; execute: (args: unknown) => Promise<unknown> };
+        result[name] = {
+            description: t.description,
+            parameters: t.parameters,
+            async execute(args: unknown) {
                 const res = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ tool: name, args }),
                 });
                 if (!res.ok) {
-                    const err = await res.json().catch(() => ({ error: res.statusText }));
-                    throw new Error((err as { error?: string }).error ?? `Tool ${name} failed: ${res.status}`);
+                    const text = await res.text();
+                    throw new Error(`Tool ${name} failed: ${res.status} - ${text}`);
                 }
-                return res.json();
+                const data = await res.json();
+                return data.result;
             },
-        }) as (typeof allTools)[keyof typeof allTools];
+        };
     }
+    return result as AllTools;
+}
 
-    return remote;
+export function getRemoteTools(baseUrl: string, toolMap: AllTools): AllTools {
+    return makeRemoteTools(baseUrl, toolMap);
 }

@@ -8,7 +8,7 @@ import { createModel, getSystemPrompt } from "./agent.js";
 import { allTools, getRemoteTools } from "./tools/index.js";
 import { getDb } from "./db.js";
 
-const tools = process.env.TOOLS_SERVERLESS_URL ? getRemoteTools(process.env.TOOLS_SERVERLESS_URL) : allTools;
+const tools = process.env.TOOLS_SERVERLESS_URL ? getRemoteTools(process.env.TOOLS_SERVERLESS_URL, allTools) : allTools;
 if (process.env.TOOLS_SERVERLESS_URL) {
     console.log("  Using remote tools at", process.env.TOOLS_SERVERLESS_URL);
 }
@@ -779,7 +779,8 @@ systemPromptReady.then(() => {
     console.log("  User profile loaded into system prompt.");
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n  Elder Care Agent API running on http://localhost:${PORT}`);
     console.log(`  Endpoints:`);
     console.log(`    GET  /api/health     — health check`);
@@ -796,3 +797,6 @@ app.listen(PORT, "0.0.0.0", () => {
     }
     console.log("");
 });
+}
+
+export default app;

@@ -1,22 +1,13 @@
 /**
- * Run a single tool by name with the given args.
- * Used by the serverless tool endpoint so tool execution can run on Vercel
- * while the main Express server runs normally elsewhere.
+ * Run a single tool by name. Used by the serverless endpoint api/tools/run.ts
+ * so tool execution can run on Vercel while the main app can run elsewhere or also on Vercel.
  */
 import { allTools } from "./tools/index.js";
 
-export type ToolName = keyof typeof allTools;
-
-const toolMap = allTools as Record<string, { execute: (args: unknown) => Promise<unknown> }>;
-
 export async function runTool(toolName: string, args: unknown): Promise<unknown> {
-    const tool = toolMap[toolName];
+    const tool = (allTools as Record<string, { execute: (args: unknown) => Promise<unknown> }>)[toolName];
     if (!tool?.execute) {
-        throw new Error(`Unknown tool: ${toolName}. Valid: ${Object.keys(toolMap).join(", ")}`);
+        throw new Error(`Unknown tool: ${toolName}. Valid: ${Object.keys(allTools).join(", ")}`);
     }
     return tool.execute(args);
-}
-
-export function getToolNames(): string[] {
-    return Object.keys(toolMap);
 }

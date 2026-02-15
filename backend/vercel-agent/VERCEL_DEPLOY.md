@@ -1,40 +1,34 @@
-# Hybrid deploy: main server normal + tools serverless on Vercel
+# Deploy vercel-agent to Vercel (main + tools serverless)
 
-- **Main server**: runs as a normal Node process (e.g. Railway, Fly.io, or `npm run dev` locally). Handles `/api/health`, `/api/voice-chat`, `/api/chat`, config, etc.
-- **Tools**: run as a single Vercel serverless function. When `TOOLS_SERVERLESS_URL` is set on the main server, it delegates every tool call (getRidePrices, getMedications, orderGroceries, etc.) to that URL instead of running tools in-process.
+- **Main app**: Express is the default export from `src/index.ts`. Vercel runs it as a single serverless function (all routes: `/api/health`, `/api/voice-chat`, etc.).
+- **Tools**: `api/tools/run.ts` is a separate serverless function (long timeout) for tool execution. The main app calls it when `TOOLS_SERVERLESS_URL` is set.
 
-## 1. Deploy the tool runner to Vercel
+## Deploy (including branch `agent-frontend`)
 
-1. In [Vercel](https://vercel.com): New Project → Import this repo.
-2. **Root Directory**: `backend/vercel-agent`.
-3. **Environment variables**: set the same as your main server (MongoDB, ElevenLabs, Anthropic/Browserbase, etc.) — the serverless function runs the real tool code and needs the same env.
-4. Deploy. You’ll get a URL like `https://your-project.vercel.app`.
+1. **Push your branch** so Vercel can use it:
+   ```bash
+   git add -A && git commit -m "Vercel deploy: main + serverless tools" && git push origin agent-frontend
+   ```
 
-The only serverless route is **POST /api/tools/run** (body: `{ "tool": "getRidePrices", "args": { "pickup": "...", "destination": "..." } }`). It runs the requested tool and returns the result. `maxDuration` is 120s so long-running tools (e.g. Browserbase rides) can finish.
+2. In [Vercel](https://vercel.com): **New Project** → Import your Git repo (e.g. GitHub).
 
-## 2. Run the main server and point it at the tool URL
+3. **Settings**:
+   - **Root Directory**: `backend/vercel-agent` (so the project root for the deployment is this folder).
+   - **Branch**: `agent-frontend` (or leave default if you deploy from `main`).
 
-Run the Express server as usual (same host as today, or any other host):
+4. **Environment variables**: Add the same vars as in `.env` (MongoDB, Anthropic, ElevenLabs, Browserbase, Cal.com, Gmail, etc.). Both the main function and the tools function use the same env.
 
-```bash
-cd backend/vercel-agent
-npm run dev
-```
+5. **Deploy** (triggered by the push, or click Deploy).
 
-To use **remote (serverless) tools**, set:
+## After deploy
 
-```bash
-export TOOLS_SERVERLESS_URL=https://your-project.vercel.app
-npm run dev
-```
+Set **TOOLS_SERVERLESS_URL** to your deployment URL so the main app delegates tool calls to the tools function, e.g.:
 
-Then every tool call from the agent is sent to `https://your-project.vercel.app/api/tools/run` and the result is returned to the main server. If you don’t set `TOOLS_SERVERLESS_URL`, tools run in-process as before.
+- `https://your-project.vercel.app`
 
-## Summary
+Redeploy or set it in the Vercel dashboard and redeploy. The main handler will then send each tool call to `POST /api/tools/run` on the same host.
 
-| Component      | Where it runs        | Role |
-|----------------|----------------------|------|
-| Express app    | Your server / local  | Health, config, voice-chat, chat, generate; orchestrates the AI and calls tools (local or remote). |
-| Tool execution | Vercel serverless    | POST /api/tools/run runs one tool by name; used only when TOOLS_SERVERLESS_URL is set. |
+## Local
 
-This keeps the server as a single long-lived process and moves heavy or variable-length tool work (Browserbase, external APIs) into serverless.
+- `npm run dev`: Express runs normally; tools run in-process (do not set `TOOLS_SERVERLESS_URL`).
+- Or set `TOOLS_SERVERLESS_URL=https://your-project.vercel.app` to test with remote tools.
