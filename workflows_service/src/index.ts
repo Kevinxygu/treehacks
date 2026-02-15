@@ -4,11 +4,14 @@ import { syncElderHealthData } from "../workflows/sync-whoop.js";
 
 const app = express();
 app.use(express.json());
-app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "http://localhost:3001");
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3001,http://localhost:3002").split(",").map((o) => o.trim());
+app.use((req, res, next) => {
+  const origin = req.get("Origin");
+  const allow = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  res.setHeader("Access-Control-Allow-Origin", allow);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (_req.method === "OPTIONS") return res.sendStatus(200);
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 

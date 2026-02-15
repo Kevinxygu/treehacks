@@ -17,7 +17,7 @@ TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 API_BASE = "https://api.prod.whoop.com/developer"
 SCOPES = "read:sleep read:cycles read:recovery offline"
 
-BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://localhost:8000").rstrip("/")
 REDIRECT_URI = f"{BACKEND_BASE_URL}/whoop/callback"
 OAUTH_STATES: dict[str, bool] = {}
 
@@ -43,7 +43,7 @@ def _set_refresh_token(token: str) -> None:
 def refresh_access_token() -> tuple[str, str]:
     token = _get_refresh_token()
     if not token:
-        raise RuntimeError("No refresh token; run once with browser to authorize.")
+        raise RuntimeError("No refresh token. Connect WHOOP once from the dashboard (or set WHOOP_REFRESH_TOKEN after running OAuth).")
     resp = requests.post(
         TOKEN_URL,
         data={
@@ -55,16 +55,20 @@ def refresh_access_token() -> tuple[str, str]:
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
+    if resp.status_code in (400, 401):
+        try:
+            err = resp.json()
+            if err.get("error") == "invalid_grant" or resp.status_code == 401:
+                if REFRESH_TOKEN_FILE.exists():
+                    REFRESH_TOKEN_FILE.unlink()
+                raise RuntimeError("Whoop refresh token expired or was revoked. Connect WHOOP again from the dashboard.")
+        except (ValueError, KeyError):
+            pass
     resp.raise_for_status()
     data = resp.json()
     new_refresh = data.get("refresh_token") or token
     if new_refresh != token:
         _set_refresh_token(new_refresh)
-    
-    # print(data["access_token"])
-    # print("^^ ACCESS TOKEN")
-    # print(new_refresh)
-    # print("^^ NEW REFRESH")
     return data["access_token"], new_refresh
 
 
@@ -203,7 +207,7 @@ def _auth_headers() -> dict:
     }
 
 
-DEFAULT_RANGE_DAYS = 1
+DEFAULT_RANGE_DAYS = 7
 
 
 def _default_range_params() -> dict:
