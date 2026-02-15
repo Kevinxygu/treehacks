@@ -31,7 +31,7 @@ function makeRemoteTools(baseUrl: string, toolMap: AllTools): AllTools {
             },
         };
     }
-    return result as AllTools;
+    return result as unknown as AllTools;
 }
 
 export function getRemoteTools(baseUrl: string, toolMap: AllTools): AllTools {

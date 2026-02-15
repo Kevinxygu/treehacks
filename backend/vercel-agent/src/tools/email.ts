@@ -72,7 +72,7 @@ export const getRecentEmails = tool({
 
             try {
                 const messages: any[] = [];
-                const total = client.mailbox?.exists ?? 0;
+                const total = (client.mailbox && typeof client.mailbox === "object" && "exists" in client.mailbox) ? client.mailbox.exists : 0;
                 if (total === 0) return { emails: [], message: "Inbox is empty." };
 
                 const from = Math.max(1, total - count + 1);

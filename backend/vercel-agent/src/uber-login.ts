@@ -47,7 +47,7 @@ try {
 }
 
 const page = stagehand.context.pages()[0];
-await page.goto("https://m.uber.com", { waitUntil: "domcontentloaded", timeout: 30000 });
+await page.goto("https://m.uber.com", { waitUntil: "domcontentloaded", timeoutMs: 30000 });
 await page.waitForTimeout(5000);
 
 // Step 3: Use agent to log in

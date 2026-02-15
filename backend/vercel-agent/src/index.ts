@@ -474,32 +474,26 @@ function buildCardsFromToolResults(steps: Array<{ toolResults: Array<{ toolName:
                 continue;
             }
             if (name === "getMedications" && Array.isArray(result)) {
-                const items: CardItem[] = result.map((m: Record<string, unknown>, i: number) => ({
-                    id: String(i),
-                    title: String(m.name ?? "Medication"),
-                    subtitle: [m.dosage, m.frequency, m.time_of_day].filter(Boolean).join(" · "),
-                    ...m,
-                }));
+                const items: CardItem[] = result.map((value: unknown, i: number) => {
+                    const m = value as Record<string, unknown>;
+                    return { id: String(i), title: String(m.name ?? "Medication"), subtitle: [m.dosage, m.frequency, m.time_of_day].filter(Boolean).join(" · "), ...m };
+                });
                 cards.push({ type: "medications", title: "Medication schedule", items });
                 continue;
             }
             if (name === "getEmergencyContacts" && Array.isArray(result)) {
-                const items: CardItem[] = result.map((c: Record<string, unknown>, i: number) => ({
-                    id: String(i),
-                    title: String(c.name ?? "Contact"),
-                    subtitle: [c.relation, c.phone].filter(Boolean).join(" · "),
-                    ...c,
-                }));
+                const items: CardItem[] = result.map((value: unknown, i: number) => {
+                    const c = value as Record<string, unknown>;
+                    return { id: String(i), title: String(c.name ?? "Contact"), subtitle: [c.relation, c.phone].filter(Boolean).join(" · "), ...c };
+                });
                 cards.push({ type: "contacts", title: "Emergency contacts", items });
                 continue;
             }
             if (name === "getBillReminders" && Array.isArray(result)) {
-                const items: CardItem[] = result.map((b: Record<string, unknown>, i: number) => ({
-                    id: String(i),
-                    title: String(b.name ?? "Bill"),
-                    subtitle: b.due_date ? `Due ${b.due_date} · $${Number(b.amount ?? 0).toFixed(2)}` : undefined,
-                    ...b,
-                }));
+                const items: CardItem[] = result.map((value: unknown, i: number) => {
+                    const b = value as Record<string, unknown>;
+                    return { id: String(i), title: String(b.name ?? "Bill"), subtitle: b.due_date ? `Due ${b.due_date} · $${Number(b.amount ?? 0).toFixed(2)}` : undefined, ...b };
+                });
                 cards.push({ type: "bills", title: "Bill reminders", items });
                 continue;
             }

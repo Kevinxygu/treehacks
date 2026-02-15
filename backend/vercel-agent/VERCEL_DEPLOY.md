@@ -2,6 +2,8 @@
 
 **If Vercel keeps deploying `main`:** In the project go to **Settings → Git**, set **Production Branch** to `agent-frontend`, save, then trigger a new deployment (Redeploy or push to `agent-frontend`).
 
+**If Vercel says it can't find your branch:** Push the branch first (`git push origin agent-frontend`). The branch must exist on GitHub for Vercel to list it. Then in **Settings → Git** set **Production Branch** to `agent-frontend`, or use **Deployments → Create Deployment** and choose branch `agent-frontend`.
+
 - **Main app**: Express is the default export from `src/index.ts`. Vercel runs it as a single serverless function (all routes: `/api/health`, `/api/voice-chat`, etc.).
 - **Tools**: `api/tools/run.ts` is a separate serverless function (long timeout) for tool execution. The main app calls it when `TOOLS_SERVERLESS_URL` is set.
 

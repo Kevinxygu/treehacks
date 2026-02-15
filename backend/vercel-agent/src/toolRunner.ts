@@ -5,7 +5,7 @@
 import { allTools } from "./tools/index.js";
 
 export async function runTool(toolName: string, args: unknown): Promise<unknown> {
-    const tool = (allTools as Record<string, { execute: (args: unknown) => Promise<unknown> }>)[toolName];
+    const tool = (allTools as unknown as Record<string, { execute: (args: unknown) => Promise<unknown> }>)[toolName];
     if (!tool?.execute) {
         throw new Error(`Unknown tool: ${toolName}. Valid: ${Object.keys(allTools).join(", ")}`);
     }

@@ -5,7 +5,6 @@ import { weatherTools } from "./weather.js";
 import { appointmentTools } from "./appointments.js";
 import { emailTools } from "./email.js";
 import { rideTools } from "./rides.js";
-import { groceryTools } from "./grocery.js";
 
 /**
  * All tools available to the agent.
@@ -24,7 +23,6 @@ export const allTools = {
 
   // Browserbase-powered tools
   ...rideTools,
-  ...groceryTools,
 };
 
 export type AllTools = typeof allTools;
