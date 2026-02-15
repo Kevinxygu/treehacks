@@ -20,20 +20,16 @@ import {
   Calendar,
   Battery,
   Activity,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
-import Link from "next/link";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 const WORKFLOWS_URL =
   process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
-  Moon,
-  Zap,
-  FileText
-} from "lucide-react";
+import { Moon, Zap, FileText } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -474,579 +470,579 @@ export default function DashboardOverview() {
         )}
       </div>
 
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Whoop Data Section - Front and Center */}
-      <Card className="border-0 shadow-sm bg-white overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-50 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
-              <span className="text-white font-black text-xs">W</span>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Whoop Data Section - Front and Center */}
+        <Card className="border-0 shadow-sm bg-white overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-gray-50 pb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+                <span className="text-white font-black text-xs">W</span>
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold">Whoop Health Insights</CardTitle>
+                <p className="text-xs text-gray-400">Real-time biometrics from wearable service</p>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-lg font-bold">Whoop Health Insights</CardTitle>
-              <p className="text-xs text-gray-400">Real-time biometrics from wearable service</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="py-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <button
-              type="button"
-              onClick={() => setExpandedWhoop("sleep")}
-              className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
-            >
-              <CircularProgress
-                value={whoopData.sleep}
-                label="Sleep Performance"
-                icon={Moon}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={() => setExpandedWhoop("recovery")}
-              className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
-            >
-              <CircularProgress
-                value={whoopData.recovery}
-                label="Recovery"
-                icon={Battery}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={() => setExpandedWhoop("strain")}
-              className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
-            >
-              <CircularProgress
-                value={whoopData.strainPercent}
-                label="Strain"
-                icon={Zap}
-              />
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {expandedWhoop !== null && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/65 transition-opacity duration-300 ${backdropReveal ? "opacity-100" : "opacity-0"}`}
-          onClick={closeWhoopOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${expandedWhoop} details`}
-        >
-          <button
-            type="button"
-            onClick={closeWhoopOverlay}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full text-white hover:bg-white/20 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div
-            className="flex items-center justify-center gap-4 w-full max-w-5xl px-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={goToPrevOverlay}
-              className="shrink-0 p-3 rounded-full text-white hover:bg-white/20 transition-colors"
-              aria-label="Previous"
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-            <div className="flex flex-col items-center gap-10 flex-1 max-w-4xl">
-              {expandedWhoop === "sleep" && (
-                <>
-            <div className="flex items-center justify-center gap-16">
-              <div
-                className="shrink-0 transition-opacity duration-500 ease-out"
-                style={{
-                  opacity: overlayReveal ? 1 : 0,
-                  transitionDelay: "0ms"
-                }}
+          </CardHeader>
+          <CardContent className="py-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <button
+                type="button"
+                onClick={() => setExpandedWhoop("sleep")}
+                className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
               >
                 <CircularProgress
                   value={whoopData.sleep}
-                  size={200}
-                  strokeWidth={14}
                   label="Sleep Performance"
                   icon={Moon}
-                  theme="overlay"
                 />
-              </div>
-              <div
-                className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
-                style={{
-                  opacity: overlayReveal ? 1 : 0,
-                  transitionDelay: "150ms"
-                }}
-              >
-                {[
-                  { label: "Sleep amount vs. needed", value: whoopData.sleep },
-                  { label: "Sleep consistency", value: whoopData.sleepConsistency ?? 0 },
-                  { label: "Sleep efficiency", value: whoopData.sleepEfficiency ?? 0 },
-                ].map(({ label, value }) => {
-                  const pct = Math.round(Number(value));
-                  const color = getWhoopColor(pct);
-                  return (
-                    <div key={label} className="flex flex-col gap-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-sm font-medium text-white">{label}</span>
-                        <span className="text-sm font-semibold text-white">{pct}%</span>
-                      </div>
-                      <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 ease-out"
-                          style={{ width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div
-              className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
-              style={{
-                opacity: overlayReveal ? 1 : 0,
-                transitionDelay: "300ms"
-              }}
-            >
-              <p className="text-sm font-semibold text-white mb-3">Sleep performance (7 days)</p>
-              <ResponsiveContainer width="100%" height={120}>
-                <BarChart data={sleepOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                  <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    {sleepOverlayBarData.map((entry, index) => (
-                      <Cell key={index} fill={getWhoopColor(entry.score)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-                </>
-              )}
-              {expandedWhoop === "recovery" && (
-                <>
-            <div className="flex items-center justify-center gap-16">
-              <div
-                className="shrink-0 transition-opacity duration-500 ease-out"
-                style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpandedWhoop("recovery")}
+                className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
               >
                 <CircularProgress
                   value={whoopData.recovery}
-                  size={200}
-                  strokeWidth={14}
                   label="Recovery"
                   icon={Battery}
-                  theme="overlay"
                 />
-              </div>
-              <div
-                className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
-                style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
-              >
-                {[
-                  { label: "Resting heart rate", value: whoopData.recoveryRestingHeartRate ?? 0, max: 120, invert: true },
-                  { label: "Heart rate variability", value: whoopData.recoveryHrvRmssdMilli ?? 0, max: 100, invert: false },
-                  { label: "Respiratory frequency", value: whoopData.recoverySpo2Percentage ?? 0, max: 100, invert: false },
-                ].map(({ label, value, max, invert }) => {
-                  const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
-                  const colorPct = invert ? 100 - pct : pct;
-                  const color = getWhoopColor(colorPct);
-                  const display = label === "Heart rate variability" ? `${Number(value).toFixed(1)} ms` : label === "Resting heart rate" ? `${Math.round(value)} bpm` : `${Math.round(value)}%`;
-                  return (
-                    <div key={label} className="flex flex-col gap-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-sm font-medium text-white">{label}</span>
-                        <span className="text-sm font-semibold text-white">{display}</span>
-                      </div>
-                      <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 ease-out"
-                          style={{ width: `${pct}%`, backgroundColor: color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div
-              className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
-              style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
-            >
-              <p className="text-sm font-semibold text-white mb-3">Recovery score (7 days)</p>
-              <ResponsiveContainer width="100%" height={120}>
-                <BarChart data={recoveryOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                  <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    {recoveryOverlayBarData.map((entry, index) => (
-                      <Cell key={index} fill={getWhoopColor(entry.score)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-                </>
-              )}
-              {expandedWhoop === "strain" && (
-                <>
-            <div className="flex items-center justify-center gap-16">
-              <div
-                className="shrink-0 transition-opacity duration-500 ease-out"
-                style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpandedWhoop("strain")}
+                className="flex flex-col items-center gap-3 outline-none focus:ring-2 focus:ring-[#7EC8B8] focus:ring-offset-2 rounded-2xl"
               >
                 <CircularProgress
                   value={whoopData.strainPercent}
-                  size={200}
-                  strokeWidth={14}
                   label="Strain"
                   icon={Zap}
-                  theme="overlay"
                 />
-              </div>
-              <div
-                className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
-                style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
-              >
-                {(() => {
-                  const kj = whoopData.strainKilojoule ?? 0;
-                  const calories = Math.round(kj / 4.184);
-                  const rows = [
-                    { label: "Calories spent", value: calories, display: `${calories} kcal`, max: 3000 },
-                    { label: "Average heart rate", value: whoopData.strainAverageHeartRate ?? 0, display: `${Math.round(whoopData.strainAverageHeartRate ?? 0)} bpm`, max: 200 },
-                    { label: "Max heart rate", value: whoopData.strainMaxHeartRate ?? 0, display: `${Math.round(whoopData.strainMaxHeartRate ?? 0)} bpm`, max: 200 },
-                  ];
-                  return rows.map(({ label, value, display, max }) => {
-                    const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
-                    const color = getWhoopColor(pct);
-                    return (
-                      <div key={label} className="flex flex-col gap-2">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-sm font-medium text-white">{label}</span>
-                          <span className="text-sm font-semibold text-white">{display}</span>
-                        </div>
-                        <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${pct}%`, backgroundColor: color }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
+              </button>
             </div>
-            <div
-              className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
-              style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
-            >
-              <p className="text-sm font-semibold text-white mb-3">Strain (7 days)</p>
-              <ResponsiveContainer width="100%" height={120}>
-                <BarChart data={strainOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                  <YAxis domain={[0, 21]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                  <Bar dataKey="strain" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    {strainOverlayBarData.map((entry, index) => (
-                      <Cell key={index} fill={getWhoopColor((entry.strain / 21) * 100)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-                </>
-              )}
-            </div>
+          </CardContent>
+        </Card>
+
+        {expandedWhoop !== null && (
+          <div
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/65 transition-opacity duration-300 ${backdropReveal ? "opacity-100" : "opacity-0"}`}
+            onClick={closeWhoopOverlay}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${expandedWhoop} details`}
+          >
             <button
               type="button"
-              onClick={goToNextOverlay}
-              className="shrink-0 p-3 rounded-full text-white hover:bg-white/20 transition-colors"
-              aria-label="Next"
+              onClick={closeWhoopOverlay}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full text-white hover:bg-white/20 transition-colors"
+              aria-label="Close"
             >
-              <ChevronRight className="w-8 h-8" />
+              <X className="w-5 h-5" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Alert section */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-          Recent Alerts
-        </h2>
-        <div className="grid gap-3">
-          {alerts.map((alert, i) => (
             <div
-              key={i}
-              className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
-                ? "bg-amber-50/50 border-amber-100"
-                : alert.level === "critical"
-                  ? "bg-red-50/50 border-red-100"
-                  : "bg-green-50/50 border-green-100"
-                }`}
+              className="flex items-center justify-center gap-4 w-full max-w-5xl px-8"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
-                  ? "bg-alert-yellow/20"
-                  : alert.level === "critical"
-                    ? "bg-alert-red/20"
-                    : "bg-alert-green/20"
-                  }`}
+              <button
+                type="button"
+                onClick={goToPrevOverlay}
+                className="shrink-0 p-3 rounded-full text-white hover:bg-white/20 transition-colors"
+                aria-label="Previous"
               >
-                {alert.level === "success" ? (
-                  <CheckCircle2 className="w-5 h-5 text-alert-green" />
-                ) : (
-                  <AlertTriangle
-                    className={`w-5 h-5 ${alert.level === "warning"
-                      ? "text-alert-yellow"
-                      : "text-alert-red"
-                      }`}
-                  />
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <div className="flex flex-col items-center gap-10 flex-1 max-w-4xl">
+                {expandedWhoop === "sleep" && (
+                  <>
+                    <div className="flex items-center justify-center gap-16">
+                      <div
+                        className="shrink-0 transition-opacity duration-500 ease-out"
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "0ms"
+                        }}
+                      >
+                        <CircularProgress
+                          value={whoopData.sleep}
+                          size={200}
+                          strokeWidth={14}
+                          label="Sleep Performance"
+                          icon={Moon}
+                          theme="overlay"
+                        />
+                      </div>
+                      <div
+                        className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "150ms"
+                        }}
+                      >
+                        {[
+                          { label: "Sleep amount vs. needed", value: whoopData.sleep },
+                          { label: "Sleep consistency", value: whoopData.sleepConsistency ?? 0 },
+                          { label: "Sleep efficiency", value: whoopData.sleepEfficiency ?? 0 },
+                        ].map(({ label, value }) => {
+                          const pct = Math.round(Number(value));
+                          const color = getWhoopColor(pct);
+                          return (
+                            <div key={label} className="flex flex-col gap-2">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-sm font-medium text-white">{label}</span>
+                                <span className="text-sm font-semibold text-white">{pct}%</span>
+                              </div>
+                              <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500 ease-out"
+                                  style={{ width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: color }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div
+                      className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
+                      style={{
+                        opacity: overlayReveal ? 1 : 0,
+                        transitionDelay: "300ms"
+                      }}
+                    >
+                      <p className="text-sm font-semibold text-white mb-3">Sleep performance (7 days)</p>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <BarChart data={sleepOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
+                          <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                            {sleepOverlayBarData.map((entry, index) => (
+                              <Cell key={index} fill={getWhoopColor(entry.score)} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+                {expandedWhoop === "recovery" && (
+                  <>
+                    <div className="flex items-center justify-center gap-16">
+                      <div
+                        className="shrink-0 transition-opacity duration-500 ease-out"
+                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+                      >
+                        <CircularProgress
+                          value={whoopData.recovery}
+                          size={200}
+                          strokeWidth={14}
+                          label="Recovery"
+                          icon={Battery}
+                          theme="overlay"
+                        />
+                      </div>
+                      <div
+                        className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
+                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
+                      >
+                        {[
+                          { label: "Resting heart rate", value: whoopData.recoveryRestingHeartRate ?? 0, max: 120, invert: true },
+                          { label: "Heart rate variability", value: whoopData.recoveryHrvRmssdMilli ?? 0, max: 100, invert: false },
+                          { label: "Respiratory frequency", value: whoopData.recoverySpo2Percentage ?? 0, max: 100, invert: false },
+                        ].map(({ label, value, max, invert }) => {
+                          const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+                          const colorPct = invert ? 100 - pct : pct;
+                          const color = getWhoopColor(colorPct);
+                          const display = label === "Heart rate variability" ? `${Number(value).toFixed(1)} ms` : label === "Resting heart rate" ? `${Math.round(value)} bpm` : `${Math.round(value)}%`;
+                          return (
+                            <div key={label} className="flex flex-col gap-2">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-sm font-medium text-white">{label}</span>
+                                <span className="text-sm font-semibold text-white">{display}</span>
+                              </div>
+                              <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500 ease-out"
+                                  style={{ width: `${pct}%`, backgroundColor: color }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div
+                      className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
+                      style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
+                    >
+                      <p className="text-sm font-semibold text-white mb-3">Recovery score (7 days)</p>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <BarChart data={recoveryOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
+                          <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                            {recoveryOverlayBarData.map((entry, index) => (
+                              <Cell key={index} fill={getWhoopColor(entry.score)} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+                {expandedWhoop === "strain" && (
+                  <>
+                    <div className="flex items-center justify-center gap-16">
+                      <div
+                        className="shrink-0 transition-opacity duration-500 ease-out"
+                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+                      >
+                        <CircularProgress
+                          value={whoopData.strainPercent}
+                          size={200}
+                          strokeWidth={14}
+                          label="Strain"
+                          icon={Zap}
+                          theme="overlay"
+                        />
+                      </div>
+                      <div
+                        className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
+                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
+                      >
+                        {(() => {
+                          const kj = whoopData.strainKilojoule ?? 0;
+                          const calories = Math.round(kj / 4.184);
+                          const rows = [
+                            { label: "Calories spent", value: calories, display: `${calories} kcal`, max: 3000 },
+                            { label: "Average heart rate", value: whoopData.strainAverageHeartRate ?? 0, display: `${Math.round(whoopData.strainAverageHeartRate ?? 0)} bpm`, max: 200 },
+                            { label: "Max heart rate", value: whoopData.strainMaxHeartRate ?? 0, display: `${Math.round(whoopData.strainMaxHeartRate ?? 0)} bpm`, max: 200 },
+                          ];
+                          return rows.map(({ label, value, display, max }) => {
+                            const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+                            const color = getWhoopColor(pct);
+                            return (
+                              <div key={label} className="flex flex-col gap-2">
+                                <div className="flex justify-between items-baseline">
+                                  <span className="text-sm font-medium text-white">{label}</span>
+                                  <span className="text-sm font-semibold text-white">{display}</span>
+                                </div>
+                                <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                    style={{ width: `${pct}%`, backgroundColor: color }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                    <div
+                      className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
+                      style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
+                    >
+                      <p className="text-sm font-semibold text-white mb-3">Strain (7 days)</p>
+                      <ResponsiveContainer width="100%" height={120}>
+                        <BarChart data={strainOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
+                          <YAxis domain={[0, 21]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
+                          <Bar dataKey="strain" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                            {strainOverlayBarData.map((entry, index) => (
+                              <Cell key={index} fill={getWhoopColor((entry.strain / 21) * 100)} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900">{alert.title}</p>
-                <p className="text-sm text-gray-500">{alert.description}</p>
-              </div>
-              <span className="text-xs text-gray-400 flex-shrink-0">
-                {alert.time}
-              </span>
-              <Link href="/dashboard/cognitive">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </Link>
+              <button
+                type="button"
+                onClick={goToNextOverlay}
+                className="shrink-0 p-3 rounded-full text-white hover:bg-white/20 transition-colors"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Metric cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Cognitive Score"
-          value="68"
-          unit="/100"
-          trend="down"
-          trendValue="-4.2%"
-          icon={Brain}
-          color="#5B9A8B"
-        >
-          <div className="h-16">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={cognitiveData}>
-                <defs>
-                  <linearGradient id="cogGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4A90E2" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#4A90E2" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#5B9A8B"
-                  strokeWidth={2}
-                  fill="url(#cogGrad)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
           </div>
-        </MetricCard>
+        )}
 
-        <MetricCard
-          title="Activity Level"
-          value="3,400"
-          unit="steps"
-          trend="up"
-          trendValue="+12%"
-          icon={Footprints}
-          color="#9DC08B"
-        >
-          <div className="h-16">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activityData}>
-                <Bar dataKey="steps" fill="#9DC08B" radius={[2, 2, 0, 0]} opacity={0.7} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </MetricCard>
-
-        <MetricCard
-          title="Medication Adherence"
-          value="95"
-          unit="%"
-          trend="stable"
-          trendValue="Consistent"
-          icon={Pill}
-          color="#9B51E0"
-        >
-          <div className="w-full bg-[#F5F7F6] rounded-full h-3 mt-1">
-            <div
-              className="h-3 rounded-full bg-gradient-to-r from-[#8B9DC0] to-[#5B9A8B]"
-              style={{ width: "95%" }}
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-2">19 of 20 doses this week</p>
-        </MetricCard>
-
-        <MetricCard
-          title="Social Engagement"
-          value="8"
-          unit="conversations"
-          trend="up"
-          trendValue="+2"
-          icon={MessageCircle}
-          color="#E8B298"
-        >
-          <div className="flex items-center gap-2 mt-1">
-            {[4, 3, 5, 2, 4, 6, 3].map((val, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+        {/* Alert section */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+            Recent Alerts
+          </h2>
+          <div className="grid gap-3">
+            {alerts.map((alert, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
+                  ? "bg-amber-50/50 border-amber-100"
+                  : alert.level === "critical"
+                    ? "bg-red-50/50 border-red-100"
+                    : "bg-green-50/50 border-green-100"
+                  }`}
+              >
                 <div
-                  className="w-full rounded-sm bg-[#E8B298]/20"
-                  style={{ height: `${val * 6}px` }}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
+                    ? "bg-alert-yellow/20"
+                    : alert.level === "critical"
+                      ? "bg-alert-red/20"
+                      : "bg-alert-green/20"
+                    }`}
                 >
-                  <div
-                    className="w-full rounded-sm bg-[#E8B298]"
-                    style={{ height: `${val * 6}px`, opacity: 0.7 }}
-                  />
+                  {alert.level === "success" ? (
+                    <CheckCircle2 className="w-5 h-5 text-alert-green" />
+                  ) : (
+                    <AlertTriangle
+                      className={`w-5 h-5 ${alert.level === "warning"
+                        ? "text-alert-yellow"
+                        : "text-alert-red"
+                        }`}
+                    />
+                  )}
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900">{alert.title}</p>
+                  <p className="text-sm text-gray-500">{alert.description}</p>
+                </div>
+                <span className="text-xs text-gray-400 flex-shrink-0">
+                  {alert.time}
+                </span>
+                <Link href="/dashboard/cognitive">
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </Link>
               </div>
             ))}
           </div>
-        </MetricCard>
-      </div>
-
-      {/* Bottom section: conversations + events */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent conversations */}
-        <div className="lg:col-span-2">
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">
-                  Recent Conversations
-                </CardTitle>
-                <Link
-                  href="/dashboard/transcript"
-                  className="text-sm text-[#5B9A8B] hover:underline font-medium"
-                >
-                  View all
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="px-0">
-              <div className="divide-y divide-gray-50">
-                {recentConversations.map((conv) => (
-                  <Link
-                    key={conv.id}
-                    href="/dashboard/transcript"
-                    className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#F8FAF9]/50 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="w-5 h-5 text-[#5B9A8B]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm font-medium text-gray-900">
-                          {conv.time}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {conv.duration}
-                        </span>
-                        {conv.markers > 0 && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0"
-                          >
-                            {conv.markers} marker{conv.markers !== 1 && "s"}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        {conv.summary}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Upcoming events + quick actions */}
-        <div className="space-y-4">
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">
-                Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {upcomingEvents.map((event, i) => (
-                <div key={i} className="flex items-center gap-3">
+        {/* Metric cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Cognitive Score"
+            value="68"
+            unit="/100"
+            trend="down"
+            trendValue="-4.2%"
+            icon={Brain}
+            color="#5B9A8B"
+          >
+            <div className="h-16">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cognitiveData}>
+                  <defs>
+                    <linearGradient id="cogGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#4A90E2" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#4A90E2" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#5B9A8B"
+                    strokeWidth={2}
+                    fill="url(#cogGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </MetricCard>
+
+          <MetricCard
+            title="Activity Level"
+            value="3,400"
+            unit="steps"
+            trend="up"
+            trendValue="+12%"
+            icon={Footprints}
+            color="#9DC08B"
+          >
+            <div className="h-16">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={activityData}>
+                  <Bar dataKey="steps" fill="#9DC08B" radius={[2, 2, 0, 0]} opacity={0.7} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </MetricCard>
+
+          <MetricCard
+            title="Medication Adherence"
+            value="95"
+            unit="%"
+            trend="stable"
+            trendValue="Consistent"
+            icon={Pill}
+            color="#9B51E0"
+          >
+            <div className="w-full bg-[#F5F7F6] rounded-full h-3 mt-1">
+              <div
+                className="h-3 rounded-full bg-gradient-to-r from-[#8B9DC0] to-[#5B9A8B]"
+                style={{ width: "95%" }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">19 of 20 doses this week</p>
+          </MetricCard>
+
+          <MetricCard
+            title="Social Engagement"
+            value="8"
+            unit="conversations"
+            trend="up"
+            trendValue="+2"
+            icon={MessageCircle}
+            color="#E8B298"
+          >
+            <div className="flex items-center gap-2 mt-1">
+              {[4, 3, 5, 2, 4, 6, 3].map((val, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${event.type === "medical"
-                      ? "bg-care-blue/10"
-                      : event.type === "family"
-                        ? "bg-care-orange/10"
-                        : "bg-care-purple/10"
-                      }`}
+                    className="w-full rounded-sm bg-[#E8B298]/20"
+                    style={{ height: `${val * 6}px` }}
                   >
-                    {event.type === "medical" ? (
-                      <Calendar className="w-4 h-4 text-care-blue" />
-                    ) : event.type === "family" ? (
-                      <Calendar className="w-4 h-4 text-care-orange" />
-                    ) : (
-                      <Pill className="w-4 h-4 text-care-purple" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {event.title}
-                    </p>
-                    <p className="text-xs text-gray-500">{event.date}</p>
+                    <div
+                      className="w-full rounded-sm bg-[#E8B298]"
+                      style={{ height: `${val * 6}px`, opacity: 0.7 }}
+                    />
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link
-                href="/dashboard/cognitive"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <Brain className="w-5 h-5 text-care-blue" />
-                <span className="text-sm font-medium text-gray-700">
-                  View cognitive report
-                </span>
-              </Link>
-              <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
-                <FileText className="w-5 h-5 text-care-purple" />
-                <span className="text-sm font-medium text-gray-700">
-                  Export report for doctor
-                </span>
-              </button>
-              <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
-                <Clock className="w-5 h-5 text-care-orange" />
-                <span className="text-sm font-medium text-gray-700">
-                  Schedule appointment
-                </span>
-              </button>
-            </CardContent>
-          </Card>
+            </div>
+          </MetricCard>
         </div>
-      </div>
+
+        {/* Bottom section: conversations + events */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent conversations */}
+          <div className="lg:col-span-2">
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold">
+                    Recent Conversations
+                  </CardTitle>
+                  <Link
+                    href="/dashboard/transcript"
+                    className="text-sm text-[#5B9A8B] hover:underline font-medium"
+                  >
+                    View all
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="px-0">
+                <div className="divide-y divide-gray-50">
+                  {recentConversations.map((conv) => (
+                    <Link
+                      key={conv.id}
+                      href="/dashboard/transcript"
+                      className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#F8FAF9]/50 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-5 h-5 text-[#5B9A8B]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-medium text-gray-900">
+                            {conv.time}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {conv.duration}
+                          </span>
+                          {conv.markers > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0"
+                            >
+                              {conv.markers} marker{conv.markers !== 1 && "s"}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 truncate">
+                          {conv.summary}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Upcoming events + quick actions */}
+          <div className="space-y-4">
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold">
+                  Upcoming Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {upcomingEvents.map((event, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${event.type === "medical"
+                        ? "bg-care-blue/10"
+                        : event.type === "family"
+                          ? "bg-care-orange/10"
+                          : "bg-care-purple/10"
+                        }`}
+                    >
+                      {event.type === "medical" ? (
+                        <Calendar className="w-4 h-4 text-care-blue" />
+                      ) : event.type === "family" ? (
+                        <Calendar className="w-4 h-4 text-care-orange" />
+                      ) : (
+                        <Pill className="w-4 h-4 text-care-purple" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-gray-500">{event.date}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold">
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Link
+                  href="/dashboard/cognitive"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <Brain className="w-5 h-5 text-care-blue" />
+                  <span className="text-sm font-medium text-gray-700">
+                    View cognitive report
+                  </span>
+                </Link>
+                <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
+                  <FileText className="w-5 h-5 text-care-purple" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Export report for doctor
+                  </span>
+                </button>
+                <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
+                  <Clock className="w-5 h-5 text-care-orange" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Schedule appointment
+                  </span>
+                </button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
