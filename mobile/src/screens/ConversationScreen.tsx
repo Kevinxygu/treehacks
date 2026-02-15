@@ -237,7 +237,7 @@ export default function ConversationScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerPill}>
-            <Text style={styles.headerTitle}>CareCompanion</Text>
+            <Text style={styles.headerTitle}>Bloom</Text>
           </View>
 
           <View style={{ width: 48 }} />

@@ -14,15 +14,13 @@ import {
   TrendingDown,
   TrendingUp,
   Calendar,
-  FileText,
-  RefreshCw,
-  Zap,
-  Moon,
   Battery,
+  Moon,
+  Zap,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   AreaChart,
   Area,
