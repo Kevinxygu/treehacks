@@ -5,8 +5,35 @@ from analysis import TranscriptAnalyzer, generate_summary, generate_longitudinal
 from analysis.transcript_analyzer import analyze_transcript, analyze_sessions
 from preventative_care.preventative_care import get_preventative_care_recommendations
 from companionship.controller import router as companionship_router
+from fastapi.middleware.cors import CORSMiddleware # Import CORSMiddleware
+import os
+from dotenv import load_dotenv  # <--- Add this
 
+# Load the .env file immediately
+load_dotenv() 
+
+# Now you can verify it loaded (optional)
+if not os.getenv("ANTHROPIC_API_KEY"):
+    print("WARNING: ANTHROPIC_API_KEY not found in environment!")
 app = FastAPI()
+
+# Add CORS middleware
+origins = [
+    "http://localhost",
+    "http://localhost:3000", # Assuming your frontend runs on port 3000
+    "http://127.0.0.1:3000",
+    "http://localhost:52766", # Based on the log output
+    "http://127.0.0.1:52766", # Based on the log output
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(companionship_router)
 
 analyzer = TranscriptAnalyzer()
