@@ -20,7 +20,10 @@ import {
   Calendar,
   Battery,
   Activity,
-  X
+  X,
+  Moon,
+  Zap,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 
@@ -28,12 +31,6 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 const WORKFLOWS_URL =
   process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
-  Moon,
-  Zap,
-  FileText
-} from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
 import {
   AreaChart,
   Area,
