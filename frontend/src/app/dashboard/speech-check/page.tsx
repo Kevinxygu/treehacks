@@ -29,6 +29,7 @@ export default function SpeechCheckPage() {
   const [error, setError] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState<SpeechDiagnosis | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
@@ -36,6 +37,7 @@ export default function SpeechCheckPage() {
     setDiagnosis(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : "audio/webm";
@@ -46,9 +48,6 @@ export default function SpeechCheckPage() {
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-      };
       recorder.start(200);
       setRecording(true);
     } catch (err: unknown) {
@@ -56,37 +55,51 @@ export default function SpeechCheckPage() {
     }
   }, []);
 
-  const stopRecording = useCallback(async () => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") return;
-    mediaRecorderRef.current.stop();
+  const stopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === "inactive") return;
+
     setRecording(false);
     setAnalyzing(true);
     setError(null);
 
-    try {
-      const mimeType = mediaRecorderRef.current.mimeType || "audio/webm";
-      const blob = new Blob(chunksRef.current, { type: mimeType });
-      const formData = new FormData();
-      formData.append("audio", blob, "recording.webm");
+    const mimeType = recorder.mimeType || "audio/webm";
 
-      const res = await fetch(`${API_BASE}/api/speech-diagnosis`, {
-        method: "POST",
-        body: formData,
-      });
+    recorder.onstop = async () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      try {
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        if (blob.size === 0) {
+          setError("No audio captured. Record for at least a few seconds and try again.");
+          setAnalyzing(false);
+          return;
+        }
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Request failed: ${res.status}`);
+        const formData = new FormData();
+        formData.append("audio", blob, "recording.webm");
+
+        const res = await fetch(`${API_BASE}/api/speech-diagnosis`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Request failed: ${res.status}`);
+        }
+
+        const data: SpeechDiagnosis = await res.json();
+        setDiagnosis(data);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Analysis failed");
+        setDiagnosis(null);
+      } finally {
+        setAnalyzing(false);
       }
+    };
 
-      const data: SpeechDiagnosis = await res.json();
-      setDiagnosis(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Analysis failed");
-      setDiagnosis(null);
-    } finally {
-      setAnalyzing(false);
-    }
+    recorder.stop();
   }, []);
 
   const sentimentColor = (s: string) => {

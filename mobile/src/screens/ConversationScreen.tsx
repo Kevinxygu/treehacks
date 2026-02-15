@@ -147,28 +147,79 @@ export default function ConversationScreen() {
 
     const stopRecording = useCallback(async () => {
         if (!recording) return;
-      }
-    } catch (err) {
-      console.error("Failed to stop recording", err);
-      setRecording(null);
-    }
-  }, [recording]);
+        setIsListening(false);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        try {
+            await recording.stopAndUnloadAsync();
+            const uri = recording.getURI();
+            setRecording(null);
+            if (!uri) return;
 
-  const toggleRecording = useCallback(() => {
-    if (isListening) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  }, [isListening, startRecording, stopRecording]);
+            setIsProcessing(true);
+            try {
+                const result = await voiceChat(uri, chatHistory);
+                if (result.transcript) {
+                    const userMsg: Message = {
+                        id: `user-${Date.now()}`,
+                        role: "user",
+                        text: result.transcript,
+                        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    };
+                    setMessages((prev) => [...prev, userMsg]);
+                    setChatHistory((prev) => [...prev, { role: "user", content: result.transcript }]);
+                }
+                setIsProcessing(false);
+                if (result.response) {
+                    const assistantMsg: Message = {
+                        id: `ai-${Date.now()}`,
+                        role: "assistant",
+                        text: result.response,
+                        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    };
+                    setMessages((prev) => [...prev, assistantMsg]);
+                    setChatHistory((prev) => [...prev, { role: "assistant", content: result.response }]);
+                    if (result.audioBase64) {
+                        await playAudioBase64(result.audioBase64);
+                    }
+                }
+            } catch (err: unknown) {
+                setIsProcessing(false);
+                console.error("Voice chat error:", err);
+                const errorMsg: Message = {
+                    id: `err-${Date.now()}`,
+                    role: "assistant",
+                    text: "I had trouble with that. Could you try again?",
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                };
+                setMessages((prev) => [...prev, errorMsg]);
+            }
+        } catch (err) {
+            console.error("Failed to stop recording", err);
+            setRecording(null);
+            setIsProcessing(false);
+        }
+    }, [recording, chatHistory, playAudioBase64]);
+
+    const toggleRecording = useCallback(() => {
+        if (isProcessing) return;
+        if (isListening) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    }, [isListening, isProcessing, startRecording, stopRecording]);
 
   // ---------- End chat ----------
 
   const handleEndChat = useCallback(() => {
+    if (currentSound) {
+      currentSound.stopAsync().catch(() => {});
+      currentSound.unloadAsync().catch(() => {});
+    }
     navigation.navigate("Confirmation", {
       summary: "Your conversation has been saved and analyzed.",
     });
-  }, [navigation]);
+  }, [navigation, currentSound]);
 
   // ---------- Render ----------
 
@@ -189,133 +240,6 @@ export default function ConversationScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safe}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backArrow}>←</Text>
-          </TouchableOpacity>
-
-          <View style={styles.headerPill}>
-            <Text style={styles.headerTitle}>Bloom</Text>
-          </View>
-
-          <View style={{ width: 48 }} />
-        </View>
-
-        setIsListening(false);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        try {
-            await recording.stopAndUnloadAsync();
-            const uri = recording.getURI();
-            setRecording(null);
-
-            if (!uri) return;
-
-            // Show processing state
-            setIsProcessing(true);
-
-            try {
-                // Call the backend voice-chat endpoint
-                const result = await voiceChat(uri, chatHistory);
-
-                // Add user message (their transcript)
-                if (result.transcript) {
-                    const userMsg: Message = {
-                        id: `user-${Date.now()}`,
-                        role: "user",
-                        text: result.transcript,
-                        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                    };
-                    setMessages((prev) => [...prev, userMsg]);
-
-                    // Update chat history for context
-                    setChatHistory((prev) => [...prev, { role: "user", content: result.transcript }]);
-                }
-
-                setIsProcessing(false);
-
-                // Add assistant response
-                if (result.response) {
-                    const assistantMsg: Message = {
-                        id: `ai-${Date.now()}`,
-                        role: "assistant",
-                        text: result.response,
-                        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                    };
-                    setMessages((prev) => [...prev, assistantMsg]);
-
-                    // Update chat history
-                    setChatHistory((prev) => [...prev, { role: "assistant", content: result.response }]);
-
-                    // Play the audio response
-                    if (result.audioBase64) {
-                        await playAudioBase64(result.audioBase64);
-                    }
-                }
-            } catch (err: any) {
-                setIsProcessing(false);
-                console.error("Voice chat error:", err);
-                const errorMsg: Message = {
-                    id: `err-${Date.now()}`,
-                    role: "assistant",
-                    text: "I had trouble with that. Could you try again?",
-                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                };
-                setMessages((prev) => [...prev, errorMsg]);
-            }
-        } catch (err) {
-            console.error("Failed to stop recording", err);
-            setRecording(null);
-            setIsProcessing(false);
-        }
-    }, [recording, chatHistory, playAudioBase64]);
-
-    const toggleRecording = useCallback(() => {
-        if (isProcessing) return; // Don't allow recording while processing
-        if (isListening) {
-            stopRecording();
-        } else {
-            startRecording();
-        }
-    }, [isListening, isProcessing, startRecording, stopRecording]);
-
-    // ---------- End chat ----------
-
-    const handleEndChat = useCallback(() => {
-        // Stop any playing audio
-        if (currentSound) {
-            currentSound.stopAsync().catch(() => {});
-            currentSound.unloadAsync().catch(() => {});
-        }
-        navigation.navigate("Confirmation", {
-            summary: "Your conversation has been saved and analyzed.",
-        });
-    }, [navigation, currentSound]);
-
-    // ---------- Render ----------
-
-    const renderMessage = ({ item }: { item: Message }) => {
-        const isUser = item.role === "user";
-        return (
-            <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowAssistant]}>
-                <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-                    <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>{item.text}</Text>
-                    <Text style={[styles.bubbleTime, isUser ? styles.bubbleTimeUser : styles.bubbleTimeAssistant]}>{item.timestamp}</Text>
-                </View>
-            </View>
-        );
-    };
-
-    return (
         <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]} style={styles.container}>
             <SafeAreaView style={styles.safe}>
                 {/* Header */}
