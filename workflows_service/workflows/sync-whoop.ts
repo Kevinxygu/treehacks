@@ -5,28 +5,25 @@ export async function syncElderHealthData(elderId: string) {
 
   console.log("[syncElderHealthData] start elderId=", elderId);
 
-  const since = await getLastSyncTimestamp(elderId);
-  console.log("[syncElderHealthData] getLastSyncTimestamp since=", since);
-
-  const sleep = await fetchWhoopSleep(elderId, since);
+  const sleep = await fetchWhoopSleep(elderId);
   console.log("[syncElderHealthData] fetchWhoopSleep count=", sleep.length);
 
-  const cycle = await fetchWhoopCycle(elderId, since);
+  const cycle = await fetchWhoopCycle(elderId);
   console.log("[syncElderHealthData] fetchWhoopCycle count=", cycle.length);
 
-  const recovery = await fetchWhoopRecovery(elderId, since);
+  const recovery = await fetchWhoopRecovery(elderId);
   console.log("[syncElderHealthData] fetchWhoopRecovery count=", recovery.length);
 
   await storeHealthData(elderId, { sleep, cycle, recovery });
   console.log("[syncElderHealthData] storeHealthData done");
 
-  const now = new Date().toISOString();
-  await updateLastSyncTimestamp(elderId, now);
-  console.log("[syncElderHealthData] updateLastSyncTimestamp now=", now);
-
-  const latestSleep = sleep.length ? sleep[sleep.length - 1] : null;
-  const latestRecovery = recovery.length ? recovery[recovery.length - 1] : null;
-  const latestCycle = cycle.length ? cycle[cycle.length - 1] : null;
+  const byStartDesc = <T extends { start?: string }>(a: T, b: T) =>
+    (b.start ? new Date(b.start).getTime() : 0) - (a.start ? new Date(a.start).getTime() : 0);
+  const byCreatedDesc = <T extends { created_at?: string }>(a: T, b: T) =>
+    (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0);
+  const latestSleep = sleep.length ? [...sleep].sort(byStartDesc)[0]! : null;
+  const latestRecovery = recovery.length ? [...recovery].sort(byCreatedDesc)[0]! : null;
+  const latestCycle = cycle.length ? [...cycle].sort(byStartDesc)[0]! : null;
   const sleepScore = latestSleep?.score?.sleep_performance_percentage ?? null;
   const inBedMs = latestSleep?.score?.stage_summary?.total_in_bed_time_milli;
   const hoursInBed = inBedMs != null ? inBedMs / (1000 * 60 * 60) : undefined;
@@ -52,6 +49,9 @@ export async function syncElderHealthData(elderId: string) {
     sleepCount: sleep.length,
     cycleCount: cycle.length,
     recoveryCount: recovery.length,
+    sleep,
+    cycle,
+    recovery,
     scores: {
       sleep: sleepScore,
       sleepNeedScore,
@@ -69,17 +69,6 @@ export async function syncElderHealthData(elderId: string) {
   };
   console.log("[syncElderHealthData] result", result);
   return result;
-}
-
-async function getLastSyncTimestamp(elderId: string): Promise<string | null> {
-  "use step";
-  console.log("[getLastSyncTimestamp] elderId=", elderId);
-  return null;
-}
-
-async function updateLastSyncTimestamp(elderId: string, isoTimestamp: string): Promise<void> {
-  "use step";
-  console.log("[updateLastSyncTimestamp] elderId=", elderId, "isoTimestamp=", isoTimestamp);
 }
 
 async function storeHealthData(
@@ -112,7 +101,7 @@ function whoopBase(): string {
   return process.env.BACKEND_URL || "http://localhost:8000";
 }
 
-async function fetchWhoopSleep(elderId: string, _since: string | null): Promise<SleepRecord[]> {
+async function fetchWhoopSleep(elderId: string): Promise<SleepRecord[]> {
   "use step";
   console.log("[fetchWhoopSleep] elderId=", elderId);
   const url = `${whoopBase()}/whoop/sleep/weekly`;
@@ -124,7 +113,7 @@ async function fetchWhoopSleep(elderId: string, _since: string | null): Promise<
   return records;
 }
 
-async function fetchWhoopCycle(elderId: string, _since: string | null): Promise<CycleRecord[]> {
+async function fetchWhoopCycle(elderId: string): Promise<CycleRecord[]> {
   "use step";
   console.log("[fetchWhoopCycle] elderId=", elderId);
   const url = `${whoopBase()}/whoop/cycle/weekly`;
@@ -136,7 +125,7 @@ async function fetchWhoopCycle(elderId: string, _since: string | null): Promise<
   return records;
 }
 
-async function fetchWhoopRecovery(elderId: string, _since: string | null): Promise<RecoveryRecord[]> {
+async function fetchWhoopRecovery(elderId: string): Promise<RecoveryRecord[]> {
   "use step";
   console.log("[fetchWhoopRecovery] elderId=", elderId);
   const url = `${whoopBase()}/whoop/recovery/weekly`;

@@ -13,7 +13,7 @@ from whoop.service import (
 
 router = APIRouter(prefix="/whoop", tags=["whoop"])
 
-FRONTEND_DASHBOARD_URL = os.environ.get("FRONTEND_DASHBOARD_URL", "http://localhost:3000/dashboard").rstrip("/")
+FRONTEND_DASHBOARD_URL = os.environ.get("FRONTEND_DASHBOARD_URL", "http://localhost:3002/dashboard").rstrip("/")
 
 
 def _whoop_error(e: Exception) -> HTTPException:

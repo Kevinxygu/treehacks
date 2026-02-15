@@ -32,6 +32,40 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 const WORKFLOWS_URL =
   process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
+const WHOOP_CACHE_KEY = "whoop_weekly_cache";
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function sortByDateAsc<T>(items: T[], getDate: (r: T) => string | undefined): T[] {
+  return [...items].sort((a, b) => {
+    const ta = getDate(a) ? new Date(getDate(a)!).getTime() : 0;
+    const tb = getDate(b) ? new Date(getDate(b)!).getTime() : 0;
+    return ta - tb;
+  });
+}
+
+function deriveOverlayDataFromCache(cache: {
+  sleep: { start?: string; score?: { sleep_performance_percentage?: number } }[];
+  recovery: { created_at?: string; score?: { recovery_score?: number } }[];
+  cycle: { start?: string; score?: { strain?: number } }[];
+}) {
+  const sleepSorted = sortByDateAsc(cache.sleep ?? [], (r) => r.start).slice(0, 7);
+  const sleepBar = sleepSorted.map((r, i) => ({
+    day: r.start ? DAY_LABELS[new Date(r.start).getDay()] : `D${i + 1}`,
+    score: Math.round(r.score?.sleep_performance_percentage ?? 0),
+  }));
+  const recoverySorted = sortByDateAsc(cache.recovery ?? [], (r) => r.created_at).slice(0, 7);
+  const recoveryBar = recoverySorted.map((r, i) => ({
+    day: r.created_at ? DAY_LABELS[new Date(r.created_at).getDay()] : `D${i + 1}`,
+    score: Math.round(r.score?.recovery_score ?? 0),
+  }));
+  const cycleSorted = sortByDateAsc(cache.cycle ?? [], (r) => r.start).slice(0, 7);
+  const strainBar = cycleSorted.map((r, i) => ({
+    day: r.start ? DAY_LABELS[new Date(r.start).getDay()] : `D${i + 1}`,
+    strain: r.score?.strain ?? 0,
+  }));
+  return { sleepBar, recoveryBar, strainBar };
+}
 import Link from "next/link";
 import {
   AreaChart,
@@ -45,9 +79,6 @@ import {
 } from "recharts";
 import {
   fetchAllSessions,
-  fetchWhoopRecovery,
-  fetchWhoopSleep,
-  fetchWhoopCycle,
   fetchLatestSession,
   type SessionEntry,
 } from "@/lib/api";
@@ -145,6 +176,7 @@ const upcomingEvents = [
     title: "Medication Delivery",
     date: "Thursday, 2:00 PM",
     type: "medication",
+    clearCache: true,
   },
 ];
 
@@ -251,7 +283,11 @@ export default function DashboardOverview() {
   const [allSessions, setAllSessions] = useState<SessionEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Whoop weekly data for overlay charts
+  const [weeklyWhoopCache, setWeeklyWhoopCache] = useState<{
+    sleep: { start?: string; score?: { sleep_performance_percentage?: number } }[];
+    recovery: { created_at?: string; score?: { recovery_score?: number } }[];
+    cycle: { start?: string; score?: { strain?: number } }[];
+  }>({ sleep: [], recovery: [], cycle: [] });
   const [sleepOverlayBarData, setSleepOverlayBarData] = useState<{ day: string; score: number }[]>([]);
   const [recoveryOverlayBarData, setRecoveryOverlayBarData] = useState<{ day: string; score: number }[]>([]);
   const [strainOverlayBarData, setStrainOverlayBarData] = useState<{ day: string; strain: number }[]>([]);
@@ -267,33 +303,24 @@ export default function DashboardOverview() {
     }).finally(() => setLoading(false));
   }, []);
 
-  // Fetch whoop weekly data for overlays on mount
   useEffect(() => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    fetchWhoopSleep().then((d) => {
-      if (d?.records?.length) {
-        setSleepOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
-          day: r.start ? days[new Date(r.start).getDay()] : `D${i + 1}`,
-          score: Math.round(r.score?.sleep_performance_percentage ?? 0),
-        })));
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(WHOOP_CACHE_KEY) : null;
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.sleep?.length || parsed?.recovery?.length || parsed?.cycle?.length) {
+        setWeeklyWhoopCache({
+          sleep: parsed.sleep ?? [],
+          recovery: parsed.recovery ?? [],
+          cycle: parsed.cycle ?? [],
+        });
+        const { sleepBar, recoveryBar, strainBar } = deriveOverlayDataFromCache(parsed);
+        setSleepOverlayBarData(sleepBar);
+        setRecoveryOverlayBarData(recoveryBar);
+        setStrainOverlayBarData(strainBar);
       }
-    }).catch(() => { });
-    fetchWhoopRecovery().then((d) => {
-      if (d?.records?.length) {
-        setRecoveryOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
-          day: r.created_at ? days[new Date(r.created_at).getDay()] : `D${i + 1}`,
-          score: Math.round(r.score?.recovery_score ?? 0),
-        })));
-      }
-    }).catch(() => { });
-    fetchWhoopCycle().then((d) => {
-      if (d?.records?.length) {
-        setStrainOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
-          day: r.start ? days[new Date(r.start).getDay()] : `D${i + 1}`,
-          strain: r.score?.strain ?? 0,
-        })));
-      }
-    }).catch(() => { });
+    } catch {
+      // ignore invalid cache
+    }
   }, []);
 
   const [expandedWhoop, setExpandedWhoop] = useState<"sleep" | "recovery" | "strain" | null>(null);
@@ -378,9 +405,30 @@ export default function DashboardOverview() {
           strainMaxHeartRate: num(scores.strainMaxHeartRate) ?? prev.strainMaxHeartRate,
         }));
       }
+      if (Array.isArray(data?.sleep) || Array.isArray(data?.cycle) || Array.isArray(data?.recovery)) {
+        const cache = {
+          sleep: data.sleep ?? [],
+          recovery: data.recovery ?? [],
+          cycle: data.cycle ?? [],
+        };
+        setWeeklyWhoopCache(cache);
+        if (typeof window !== "undefined") localStorage.setItem(WHOOP_CACHE_KEY, JSON.stringify(cache));
+        const { sleepBar, recoveryBar, strainBar } = deriveOverlayDataFromCache(cache);
+        setSleepOverlayBarData(sleepBar);
+        setRecoveryOverlayBarData(recoveryBar);
+        setStrainOverlayBarData(strainBar);
+      }
     } finally {
       setSyncLoading(false);
     }
+  };
+
+  const clearWhoopCache = () => {
+    setWeeklyWhoopCache({ sleep: [], recovery: [], cycle: [] });
+    setSleepOverlayBarData([]);
+    setRecoveryOverlayBarData([]);
+    setStrainOverlayBarData([]);
+    if (typeof window !== "undefined") localStorage.removeItem(WHOOP_CACHE_KEY);
   };
 
   // Derive cognitive chart data from sessions
@@ -471,7 +519,7 @@ export default function DashboardOverview() {
           <button
             onClick={connectWhoop}
             disabled={whoopLoading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 -translate-x-2 translate-y-2"
             title="Connect WHOOP"
           >
             <div
@@ -480,8 +528,8 @@ export default function DashboardOverview() {
                 boxShadow: "0 0 8px 2px rgba(217, 123, 123, 0.8), 0 0 16px 4px rgba(217, 123, 123, 0.4)",
               }}
             />
-            <span className="text-xs text-gray-500 hover:text-gray-700">
-              Whoop
+            <span className="text-gray-500 hover:text-gray-700 mr-2">
+              Connect to Whoop
             </span>
           </button>
         )}
@@ -497,7 +545,7 @@ export default function DashboardOverview() {
               </div>
               <div>
                 <CardTitle className="text-lg font-bold">Whoop Health Insights</CardTitle>
-                <p className="text-xs text-gray-400">Real-time biometrics from wearable service</p>
+                <p className="text-xs text-gray-400">Daily scores</p>
               </div>
             </div>
           </CardHeader>
@@ -510,7 +558,7 @@ export default function DashboardOverview() {
               >
                 <CircularProgress
                   value={whoopData.sleep}
-                  label="Sleep Performance"
+                  label="Sleep"
                   icon={Moon}
                 />
               </button>
@@ -583,7 +631,7 @@ export default function DashboardOverview() {
                           value={whoopData.sleep}
                           size={200}
                           strokeWidth={14}
-                          label="Sleep Performance"
+                          label="Sleep"
                           icon={Moon}
                           theme="overlay"
                         />
@@ -731,7 +779,7 @@ export default function DashboardOverview() {
                           const calories = Math.round(kj / 4.184);
                           const rows = [
                             { label: "Calories spent", value: calories, display: `${calories} kcal`, max: 3000 },
-                            { label: "Average heart rate", value: whoopData.strainAverageHeartRate ?? 0, display: `${Math.round(whoopData.strainAverageHeartRate ?? 0)} bpm`, max: 200 },
+                            { label: "Avg heart rate", value: whoopData.strainAverageHeartRate ?? 0, display: `${Math.round(whoopData.strainAverageHeartRate ?? 0)} bpm`, max: 200 },
                             { label: "Max heart rate", value: whoopData.strainMaxHeartRate ?? 0, display: `${Math.round(whoopData.strainMaxHeartRate ?? 0)} bpm`, max: 200 },
                           ];
                           return rows.map(({ label, value, display, max }) => {
@@ -1006,32 +1054,41 @@ export default function DashboardOverview() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {upcomingEvents.map((event, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${event.type === "medical"
-                        ? "bg-blue-100"
-                        : event.type === "family"
-                          ? "bg-orange-100"
-                          : "bg-purple-100"
-                        }`}
+                {upcomingEvents.map((event, i) => {
+                  const isClearCache = "clearCache" in event && event.clearCache;
+                  const Wrapper = isClearCache ? "button" : "div";
+                  return (
+                    <Wrapper
+                      key={i}
+                      type={isClearCache ? "button" : undefined}
+                      onClick={isClearCache ? clearWhoopCache : undefined}
+                      className={`flex items-center gap-3 w-full text-left ${isClearCache ? "cursor-default" : ""}`}
                     >
-                      {event.type === "medical" ? (
-                        <Calendar className="w-4 h-4 text-blue-600" />
-                      ) : event.type === "family" ? (
-                        <Calendar className="w-4 h-4 text-orange-600" />
-                      ) : (
-                        <Pill className="w-4 h-4 text-purple-600" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {event.title}
-                      </p>
-                      <p className="text-xs text-gray-500">{event.date}</p>
-                    </div>
-                  </div>
-                ))}
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${event.type === "medical"
+                          ? "bg-blue-100"
+                          : event.type === "family"
+                            ? "bg-orange-100"
+                            : "bg-purple-100"
+                          }`}
+                      >
+                        {event.type === "medical" ? (
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                        ) : event.type === "family" ? (
+                          <Calendar className="w-4 h-4 text-orange-600" />
+                        ) : (
+                          <Pill className="w-4 h-4 text-purple-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {event.title}
+                        </p>
+                        <p className="text-xs text-gray-500">{event.date}</p>
+                      </div>
+                    </Wrapper>
+                  );
+                })}
               </CardContent>
             </Card>
 
