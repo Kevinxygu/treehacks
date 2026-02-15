@@ -106,15 +106,20 @@ export default function HomeScreen() {
         navigation.navigate("Conversation");
     }, [navigation]);
 
-    return (
-        <LinearGradient colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <SafeAreaView style={styles.safe}>
-                {/* Top bar */}
-                <View style={styles.topBar}>
-                    <View style={styles.titlePill}>
-                        <Text style={styles.titleText}>CareCompanion</Text>
-                    </View>
-                </View>
+  return (
+    <LinearGradient
+      colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <SafeAreaView style={styles.safe}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View style={styles.titlePill}>
+            <Text style={styles.titleText}>Bloom</Text>
+          </View>
+        </View>
 
                 {/* Main content */}
                 <View style={styles.center}>
@@ -250,14 +255,14 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.85)",
     },
 
-    // Pulse
-    pulseRing: {
-        position: "absolute",
-        width: BUTTON_SIZE + 60,
-        height: BUTTON_SIZE + 60,
-        borderRadius: (BUTTON_SIZE + 60) / 2,
-        backgroundColor: "rgba(74,144,226,0.18)",
-    },
+  // Pulse
+  pulseRing: {
+    position: "absolute",
+    width: BUTTON_SIZE + 60,
+    height: BUTTON_SIZE + 60,
+    borderRadius: (BUTTON_SIZE + 60) / 2,
+    backgroundColor: "rgba(91,154,139,0.18)",
+  },
 
     // Status
     statusText: {

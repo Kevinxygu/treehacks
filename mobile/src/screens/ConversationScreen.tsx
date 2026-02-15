@@ -147,6 +147,68 @@ export default function ConversationScreen() {
 
     const stopRecording = useCallback(async () => {
         if (!recording) return;
+      }
+    } catch (err) {
+      console.error("Failed to stop recording", err);
+      setRecording(null);
+    }
+  }, [recording]);
+
+  const toggleRecording = useCallback(() => {
+    if (isListening) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isListening, startRecording, stopRecording]);
+
+  // ---------- End chat ----------
+
+  const handleEndChat = useCallback(() => {
+    navigation.navigate("Confirmation", {
+      summary: "Your conversation has been saved and analyzed.",
+    });
+  }, [navigation]);
+
+  // ---------- Render ----------
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isUser = item.role === "user";
+    return (
+      <View style={[styles.bubbleRow, isUser ? styles.bubbleRowUser : styles.bubbleRowAssistant]}>
+        <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
+          <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>
+            {item.text}
+          </Text>
+          <Text style={[styles.bubbleTime, isUser ? styles.bubbleTimeUser : styles.bubbleTimeAssistant]}>
+            {item.timestamp}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <LinearGradient
+      colors={[Colors.gradientStart, Colors.gradientMid, Colors.gradientEnd]}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safe}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+
+          <View style={styles.headerPill}>
+            <Text style={styles.headerTitle}>Bloom</Text>
+          </View>
+
+          <View style={{ width: 48 }} />
+        </View>
 
         setIsListening(false);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

@@ -7,14 +7,11 @@ import { Button } from "@/components/ui/button";
 import {
   Play,
   Pause,
-  SkipBack,
-  SkipForward,
   Download,
   AlertTriangle,
   CheckCircle2,
   Clock,
   MessageCircle,
-  ChevronRight,
   Search,
   Filter,
   Volume2,
@@ -220,7 +217,7 @@ const analysisSummary = {
 export default function TranscriptPage() {
   const [selectedConversation, setSelectedConversation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackTime, setPlaybackTime] = useState("8:02:00");
+  const [playbackTime] = useState("8:02:00");
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -234,7 +231,7 @@ export default function TranscriptPage() {
             Review conversations with annotated cognitive markers
           </p>
         </div>
-        <Button className="bg-care-blue hover:bg-care-blue/90 text-white gap-2">
+        <Button className="bg-[#5B9A8B] hover:bg-[#4A8577] text-white gap-2">
           <Download className="w-4 h-4" />
           Export All
         </Button>
@@ -263,11 +260,10 @@ export default function TranscriptPage() {
                   <button
                     key={conv.id}
                     onClick={() => setSelectedConversation(i)}
-                    className={`w-full text-left px-5 py-3.5 transition-colors ${
-                      selectedConversation === i
-                        ? "bg-care-blue/5 border-l-2 border-care-blue"
-                        : "hover:bg-gray-50 border-l-2 border-transparent"
-                    }`}
+                    className={`w-full text-left px-5 py-3.5 transition-colors ${selectedConversation === i
+                      ? "bg-[#5B9A8B]/5 border-l-2 border-[#5B9A8B]"
+                      : "hover:bg-[#F8FAF9] border-l-2 border-transparent"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-900">
@@ -333,7 +329,7 @@ export default function TranscriptPage() {
               <div className="mt-4 p-3 rounded-xl bg-gray-50 flex items-center gap-4">
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-10 h-10 rounded-full bg-care-blue flex items-center justify-center flex-shrink-0"
+                  className="w-10 h-10 rounded-full bg-[#5B9A8B] flex items-center justify-center flex-shrink-0"
                 >
                   {isPlaying ? (
                     <Pause className="w-4 h-4 text-white" />
@@ -342,8 +338,8 @@ export default function TranscriptPage() {
                   )}
                 </button>
                 <div className="flex-1">
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div className="bg-care-blue h-1.5 rounded-full" style={{ width: "35%" }} />
+                  <div className="w-full bg-[#E5EBE8] rounded-full h-1.5">
+                    <div className="bg-[#5B9A8B] h-1.5 rounded-full" style={{ width: "35%" }} />
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-xs text-gray-400">{playbackTime}</span>
@@ -365,20 +361,18 @@ export default function TranscriptPage() {
                 {transcript.map((entry) => (
                   <div key={entry.id} className="group">
                     <div
-                      className={`flex gap-3 ${
-                        entry.markers && entry.markers.length > 0
-                          ? "bg-amber-50/50 -mx-4 px-4 py-3 rounded-xl border border-amber-100/50"
-                          : ""
-                      }`}
+                      className={`flex gap-3 ${entry.markers && entry.markers.length > 0
+                        ? "bg-amber-50/50 -mx-4 px-4 py-3 rounded-xl border border-amber-100/50"
+                        : ""
+                        }`}
                     >
                       {/* Speaker indicator */}
                       <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-1">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                            entry.speaker === "user"
-                              ? "bg-gray-200 text-gray-600"
-                              : "bg-care-blue/15 text-care-blue"
-                          }`}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${entry.speaker === "user"
+                            ? "bg-gray-200 text-gray-600"
+                            : "bg-care-blue/15 text-care-blue"
+                            }`}
                         >
                           {entry.speaker === "user" ? "MT" : "AI"}
                         </div>
@@ -390,7 +384,7 @@ export default function TranscriptPage() {
                           <span className="text-xs font-medium text-gray-500">
                             {entry.speaker === "user"
                               ? "Margaret"
-                              : "CareCompanion"}
+                              : "Bloom"}
                           </span>
                           <span className="text-xs text-gray-300">
                             {entry.timestamp}
@@ -404,11 +398,10 @@ export default function TranscriptPage() {
                         {entry.markers?.map((marker, i) => (
                           <div
                             key={i}
-                            className={`mt-2 flex items-start gap-2 text-xs ${
-                              marker.type === "warning"
-                                ? "text-amber-600"
-                                : "text-alert-green"
-                            }`}
+                            className={`mt-2 flex items-start gap-2 text-xs ${marker.type === "warning"
+                              ? "text-amber-600"
+                              : "text-alert-green"
+                              }`}
                           >
                             {marker.type === "warning" ? (
                               <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />

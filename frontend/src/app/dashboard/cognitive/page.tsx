@@ -7,16 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import {
   Brain,
   CheckCircle2,
-  AlertTriangle,
   Download,
-  Calendar,
   FileText,
   Activity,
   ChevronDown,
   ChevronUp,
   Shield,
   BarChart3,
-  Heart,
   Lightbulb,
   TrendingUp,
 } from "lucide-react";
@@ -209,11 +206,11 @@ function getProgressPercent(marker: string, value: number, threshold: number): n
 }
 
 function getProgressColor(marker: string, value: number, threshold: number, flagged: boolean): string {
-  if (flagged) return "bg-amber-400";
+  if (flagged) return "bg-[#E8C87B]";
   if (HIGHER_IS_BETTER.has(marker)) {
-    return value >= threshold ? "bg-alert-green" : "bg-amber-400";
+    return value >= threshold ? "bg-[#7EC8B8]" : "bg-[#E8C87B]";
   }
-  return value <= threshold ? "bg-alert-green" : "bg-amber-400";
+  return value <= threshold ? "bg-[#7EC8B8]" : "bg-[#E8C87B]";
 }
 
 // --- Raw Metrics Formatting ---
@@ -290,7 +287,7 @@ export default function CognitiveAnalysisPage() {
             Session {data.session_id} &middot; {data.session_date} &middot; Rule-based speech analysis with AI insights
           </p>
         </div>
-        <Button className="bg-care-blue hover:bg-care-blue/90 text-white gap-2">
+        <Button className="bg-[#5B9A8B] hover:bg-[#4A8577] text-white gap-2">
           <Download className="w-4 h-4" />
           Export Report
         </Button>
@@ -323,8 +320,8 @@ export default function CognitiveAnalysisPage() {
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-care-blue/10 ring-1 ring-care-blue/20 flex items-center justify-center">
-                <Brain className="w-7 h-7 text-care-blue" />
+              <div className="w-16 h-16 rounded-2xl bg-[#5B9A8B]/10 ring-1 ring-[#5B9A8B]/20 flex items-center justify-center">
+                <Brain className="w-7 h-7 text-[#5B9A8B]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Session Stats</p>
@@ -578,9 +575,8 @@ export default function CognitiveAnalysisPage() {
         </CardHeader>
         <CardContent>
           <div
-            className={`prose prose-sm prose-gray max-w-none ${
-              showFullReport ? "" : "max-h-64 overflow-hidden relative"
-            }`}
+            className={`prose prose-sm prose-gray max-w-none ${showFullReport ? "" : "max-h-64 overflow-hidden relative"
+              }`}
           >
             <ReactMarkdown
               components={{
