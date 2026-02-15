@@ -1,5 +1,7 @@
 # Deploy vercel-agent to Vercel (main + tools serverless)
 
+**If Vercel keeps deploying `main`:** In the project go to **Settings → Git**, set **Production Branch** to `agent-frontend`, save, then trigger a new deployment (Redeploy or push to `agent-frontend`).
+
 - **Main app**: Express is the default export from `src/index.ts`. Vercel runs it as a single serverless function (all routes: `/api/health`, `/api/voice-chat`, etc.).
 - **Tools**: `api/tools/run.ts` is a separate serverless function (long timeout) for tool execution. The main app calls it when `TOOLS_SERVERLESS_URL` is set.
 
@@ -14,7 +16,7 @@
 
 3. **Settings**:
    - **Root Directory**: `backend/vercel-agent` (so the project root for the deployment is this folder).
-   - **Branch**: `agent-frontend` (or leave default if you deploy from `main`).
+   - **Production branch**: In **Settings → Git**, set **Production Branch** to `agent-frontend` so deploys use this branch instead of `main`. Save and redeploy.
 
 4. **Environment variables**: Add the same vars as in `.env` (MongoDB, Anthropic, ElevenLabs, Browserbase, Cal.com, Gmail, etc.). Both the main function and the tools function use the same env.
 
