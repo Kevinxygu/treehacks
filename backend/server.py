@@ -5,10 +5,10 @@ from analysis import TranscriptAnalyzer, generate_summary, generate_longitudinal
 from analysis.transcript_analyzer import analyze_transcript, analyze_sessions
 from preventative_care.preventative_care import get_preventative_care_recommendations
 from companionship.controller import router as companionship_router
+from whoop.controller import router as whoop_router
 from fastapi.middleware.cors import CORSMiddleware # Import CORSMiddleware
 import os
 from dotenv import load_dotenv  # <--- Add this
-
 # Load the .env file immediately
 load_dotenv() 
 
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(companionship_router)
+app.include_router(whoop_router)
 
 analyzer = TranscriptAnalyzer()
 
