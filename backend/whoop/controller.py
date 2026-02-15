@@ -1,14 +1,50 @@
+import os
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
 
-from whoop.service import get_weekly_sleep, get_weekly_cycle, get_weekly_recovery
+from whoop.service import (
+    get_weekly_sleep,
+    get_weekly_cycle,
+    get_weekly_recovery,
+    get_auth_url,
+    exchange_code_for_token,
+    is_whoop_connected,
+)
 
 router = APIRouter(prefix="/whoop", tags=["whoop"])
+
+FRONTEND_DASHBOARD_URL = os.environ.get("FRONTEND_DASHBOARD_URL", "http://localhost:3000/dashboard").rstrip("/")
 
 
 def _whoop_error(e: Exception) -> HTTPException:
     if isinstance(e, ValueError):
         return HTTPException(status_code=500, detail=str(e))
     return HTTPException(status_code=502, detail=str(e))
+
+
+@router.get("/status")
+async def whoop_status():
+    return {"connected": is_whoop_connected()}
+
+
+@router.get("/auth-url")
+async def whoop_auth_url():
+    try:
+        url = get_auth_url()
+        return {"authUrl": url}
+    except Exception as e:
+        raise _whoop_error(e)
+
+
+@router.get("/callback")
+async def whoop_callback(code: str | None = None, state: str | None = None):
+    if not code or not state:
+        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
+    try:
+        exchange_code_for_token(code, state)
+        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=connected")
+    except Exception:
+        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
 
 
 @router.get("/sleep/weekly")
