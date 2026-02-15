@@ -98,7 +98,7 @@ async function storeHealthData(
 }
 
 function whoopBase(): string {
-  return process.env.BACKEND_URL || "http://localhost:8000";
+  return process.env.BACKEND_URL || "https://treehacks-backend-pi.vercel.app";
 }
 
 async function fetchWhoopSleep(elderId: string): Promise<SleepRecord[]> {

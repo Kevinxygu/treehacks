@@ -13,7 +13,7 @@ from whoop.service import (
 
 router = APIRouter(prefix="/whoop", tags=["whoop"])
 
-FRONTEND_DASHBOARD_URL = os.environ.get("FRONTEND_DASHBOARD_URL", "http://localhost:3002/dashboard").rstrip("/")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3002").rstrip("/")
 
 
 def _whoop_error(e: Exception) -> HTTPException:
@@ -42,12 +42,12 @@ async def whoop_auth_url():
 @router.get("/callback")
 async def whoop_callback(code: str | None = None, state: str | None = None):
     if not code or not state:
-        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
+        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?whoop=error")
     try:
         exchange_code_for_token(code, state)
-        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=connected")
+        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?whoop=connected")
     except Exception:
-        return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
+        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?whoop=error")
 
 
 @router.get("/sleep/weekly")

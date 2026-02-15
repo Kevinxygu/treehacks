@@ -19,7 +19,7 @@ import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import "@xyflow/react/dist/style.css";
 
 const FASTAPI_BASE =
-  process.env.BACKEND_BASE_URL || "http://localhost:8000";
+  process.env.BACKEND_URL || "https://treehacks-backend-pi.vercel.app";
 const FAMILY_PHOTOS_FALLBACKS = [
   "/images/reminiscence/IMG_0017.jpg",
   "/images/reminiscence/IMG_0023.jpg",

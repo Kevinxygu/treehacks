@@ -17,8 +17,8 @@ TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 API_BASE = "https://api.prod.whoop.com/developer"
 SCOPES = "read:sleep read:cycles read:recovery offline"
 
-BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://localhost:8000").rstrip("/")
-REDIRECT_URI = f"{BACKEND_BASE_URL}/whoop/callback"
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://treehacks-backend-pi.vercel.app").rstrip("/")
+REDIRECT_URI = f"{BACKEND_URL}/whoop/callback"
 OAUTH_STATES: dict[str, bool] = {}
 
 CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]

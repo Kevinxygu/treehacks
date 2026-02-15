@@ -14,16 +14,16 @@ from beeper_client import list_messages, download_attachment, read_local_file
 POLL_INTERVAL_SEC = int(os.environ.get("BEEPER_POLL_INTERVAL_SEC", "5"))
 DELAY_AFTER_UPLOAD_SEC = int(os.environ.get("DELAY_AFTER_UPLOAD_SEC", "5"))
 FAMILY_ID = os.environ.get("FAMILY_ID", "default")
-BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "")
+BACKEND_URL = os.environ.get("BACKEND_URL", "")
 PRESIGN_PATH = "/companionship/get-upload-presign"
 SYNC_STARTED_PATH = "/companionship/sync-started"
 SYNC_FINISHED_PATH = "/companionship/sync-finished"
 
 
 def get_presigned_url(filename: str, content_type: str) -> str | None:
-    if not BACKEND_BASE_URL:
+    if not BACKEND_URL:
         return None
-    url = f"{BACKEND_BASE_URL.rstrip('/')}{PRESIGN_PATH}"
+    url = f"{BACKEND_URL.rstrip('/')}{PRESIGN_PATH}"
     r = requests.post(
         url,
         json={"family_id": FAMILY_ID, "filename": filename, "content_type": content_type},
@@ -38,10 +38,10 @@ def upload_to_presigned(url: str, data: bytes, content_type: str) -> bool:
     return r.status_code == 200
 
 def post_sync_status(path: str) -> bool:
-    if not BACKEND_BASE_URL:
+    if not BACKEND_URL:
         return False
     try:
-        r = requests.post(f"{BACKEND_BASE_URL.rstrip('/')}{path}", timeout=5)
+        r = requests.post(f"{BACKEND_URL.rstrip('/')}{path}", timeout=5)
         return r.status_code == 200
     except requests.RequestException:
         return False
@@ -74,8 +74,8 @@ def poll_once(chat_id: str, last_cursor: str | None, seen_ids: set[str]) -> tupl
                 if presigned and upload_to_presigned(presigned, data, ctype):
                     uploaded += 1
                     print(f"Uploaded {name} from message {mid}")
-                elif not BACKEND_BASE_URL:
-                    print(f"New image (no BACKEND_BASE_URL): {name} from {mid}")
+                elif not BACKEND_URL:
+                    print(f"New image (no BACKEND_URL): {name} from {mid}")
             except Exception as e:
                 print(f"Skip attachment {mxc[:50]}...: {e}")
     return (next_cursor if messages else last_cursor, uploaded)
@@ -85,8 +85,8 @@ def run():
     seen_ids: set[str] = set()
     last_cursor: str | None = None
     print(f"Polling chat {chat_id} every {POLL_INTERVAL_SEC}s (family_id={FAMILY_ID})")
-    if not BACKEND_BASE_URL:
-        print("BACKEND_BASE_URL not set: will only log new images, no upload")
+    if not BACKEND_URL:
+        print("BACKEND_URL not set: will only log new images, no upload")
     while True:
         try:
             post_sync_status(SYNC_STARTED_PATH)

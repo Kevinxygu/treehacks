@@ -1,4 +1,4 @@
-const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_URL || "http://localhost:8000";
+const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_URL || "https://treehacks-backend-pi.vercel.app";
 
 // ---------- Session types ----------
 

@@ -25,18 +25,22 @@ import {
   Moon,
   Zap,
   FileText,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  process.env.BACKEND_URL || "https://treehacks-backend-pi.vercel.app";
 const WORKFLOWS_URL =
-  process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
+  process.env.WORKFLOWS_URL ||
+  "https://workflows-service-5n1e8n93y-paultibes-projects.vercel.app"; // localhost:3000
 const WHOOP_CACHE_KEY = "whoop_weekly_cache";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function sortByDateAsc<T>(items: T[], getDate: (r: T) => string | undefined): T[] {
+function sortByDateAsc<T>(
+  items: T[],
+  getDate: (r: T) => string | undefined
+): T[] {
   return [...items].sort((a, b) => {
     const ta = getDate(a) ? new Date(getDate(a)!).getTime() : 0;
     const tb = getDate(b) ? new Date(getDate(b)!).getTime() : 0;
@@ -45,21 +49,35 @@ function sortByDateAsc<T>(items: T[], getDate: (r: T) => string | undefined): T[
 }
 
 function deriveOverlayDataFromCache(cache: {
-  sleep: { start?: string; score?: { sleep_performance_percentage?: number } }[];
+  sleep: {
+    start?: string;
+    score?: { sleep_performance_percentage?: number };
+  }[];
   recovery: { created_at?: string; score?: { recovery_score?: number } }[];
   cycle: { start?: string; score?: { strain?: number } }[];
 }) {
-  const sleepSorted = sortByDateAsc(cache.sleep ?? [], (r) => r.start).slice(0, 7);
+  const sleepSorted = sortByDateAsc(cache.sleep ?? [], (r) => r.start).slice(
+    0,
+    7
+  );
   const sleepBar = sleepSorted.map((r, i) => ({
     day: r.start ? DAY_LABELS[new Date(r.start).getDay()] : `D${i + 1}`,
     score: Math.round(r.score?.sleep_performance_percentage ?? 0),
   }));
-  const recoverySorted = sortByDateAsc(cache.recovery ?? [], (r) => r.created_at).slice(0, 7);
+  const recoverySorted = sortByDateAsc(
+    cache.recovery ?? [],
+    (r) => r.created_at
+  ).slice(0, 7);
   const recoveryBar = recoverySorted.map((r, i) => ({
-    day: r.created_at ? DAY_LABELS[new Date(r.created_at).getDay()] : `D${i + 1}`,
+    day: r.created_at
+      ? DAY_LABELS[new Date(r.created_at).getDay()]
+      : `D${i + 1}`,
     score: Math.round(r.score?.recovery_score ?? 0),
   }));
-  const cycleSorted = sortByDateAsc(cache.cycle ?? [], (r) => r.start).slice(0, 7);
+  const cycleSorted = sortByDateAsc(cache.cycle ?? [], (r) => r.start).slice(
+    0,
+    7
+  );
   const strainBar = cycleSorted.map((r, i) => ({
     day: r.start ? DAY_LABELS[new Date(r.start).getDay()] : `D${i + 1}`,
     strain: r.score?.strain ?? 0,
@@ -95,7 +113,7 @@ function CircularProgress({
   strokeWidth = 10,
   label,
   icon: Icon,
-  theme = "default"
+  theme = "default",
 }: {
   value: number;
   size?: number;
@@ -111,7 +129,9 @@ function CircularProgress({
   const isOverlay = theme === "overlay";
   const trackStroke = isOverlay ? "rgba(255,255,255,0.25)" : "#F5F7F6";
   const textClass = isOverlay ? "text-white" : "text-[#2D3B36]";
-  const labelClass = isOverlay ? "text-white font-semibold" : "text-sm font-semibold text-[#6B7C74]";
+  const labelClass = isOverlay
+    ? "text-white font-semibold"
+    : "text-sm font-semibold text-[#6B7C74]";
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -135,7 +155,7 @@ function CircularProgress({
             strokeDasharray={circumference}
             style={{
               strokeDashoffset: offset,
-              transition: "stroke-dashoffset 1s ease-in-out, stroke 0.5s ease"
+              transition: "stroke-dashoffset 1s ease-in-out, stroke 0.5s ease",
             }}
             strokeLinecap="round"
           />
@@ -179,7 +199,6 @@ const upcomingEvents = [
     clearCache: true,
   },
 ];
-
 
 function MetricCard({
   title,
@@ -284,36 +303,52 @@ export default function DashboardOverview() {
   const [loading, setLoading] = useState(true);
 
   const [weeklyWhoopCache, setWeeklyWhoopCache] = useState<{
-    sleep: { start?: string; score?: { sleep_performance_percentage?: number } }[];
+    sleep: {
+      start?: string;
+      score?: { sleep_performance_percentage?: number };
+    }[];
     recovery: { created_at?: string; score?: { recovery_score?: number } }[];
     cycle: { start?: string; score?: { strain?: number } }[];
   }>({ sleep: [], recovery: [], cycle: [] });
-  const [sleepOverlayBarData, setSleepOverlayBarData] = useState<{ day: string; score: number }[]>([]);
-  const [recoveryOverlayBarData, setRecoveryOverlayBarData] = useState<{ day: string; score: number }[]>([]);
-  const [strainOverlayBarData, setStrainOverlayBarData] = useState<{ day: string; strain: number }[]>([]);
+  const [sleepOverlayBarData, setSleepOverlayBarData] = useState<
+    { day: string; score: number }[]
+  >([]);
+  const [recoveryOverlayBarData, setRecoveryOverlayBarData] = useState<
+    { day: string; score: number }[]
+  >([]);
+  const [strainOverlayBarData, setStrainOverlayBarData] = useState<
+    { day: string; strain: number }[]
+  >([]);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      fetchLatestSession(),
-      fetchAllSessions(),
-    ]).then(([latest, sessions]) => {
-      setLatestSession(latest);
-      setAllSessions(sessions);
-    }).finally(() => setLoading(false));
+    Promise.all([fetchLatestSession(), fetchAllSessions()])
+      .then(([latest, sessions]) => {
+        setLatestSession(latest);
+        setAllSessions(sessions);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem(WHOOP_CACHE_KEY) : null;
+      const raw =
+        typeof window !== "undefined"
+          ? localStorage.getItem(WHOOP_CACHE_KEY)
+          : null;
       const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed?.sleep?.length || parsed?.recovery?.length || parsed?.cycle?.length) {
+      if (
+        parsed?.sleep?.length ||
+        parsed?.recovery?.length ||
+        parsed?.cycle?.length
+      ) {
         setWeeklyWhoopCache({
           sleep: parsed.sleep ?? [],
           recovery: parsed.recovery ?? [],
           cycle: parsed.cycle ?? [],
         });
-        const { sleepBar, recoveryBar, strainBar } = deriveOverlayDataFromCache(parsed);
+        const { sleepBar, recoveryBar, strainBar } =
+          deriveOverlayDataFromCache(parsed);
         setSleepOverlayBarData(sleepBar);
         setRecoveryOverlayBarData(recoveryBar);
         setStrainOverlayBarData(strainBar);
@@ -323,7 +358,9 @@ export default function DashboardOverview() {
     }
   }, []);
 
-  const [expandedWhoop, setExpandedWhoop] = useState<"sleep" | "recovery" | "strain" | null>(null);
+  const [expandedWhoop, setExpandedWhoop] = useState<
+    "sleep" | "recovery" | "strain" | null
+  >(null);
   const [backdropReveal, setBackdropReveal] = useState(false);
   const [overlayReveal, setOverlayReveal] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -351,7 +388,11 @@ export default function DashboardOverview() {
     }, 300);
   };
 
-  const whoopOrder: Array<"sleep" | "recovery" | "strain"> = ["sleep", "recovery", "strain"];
+  const whoopOrder: Array<"sleep" | "recovery" | "strain"> = [
+    "sleep",
+    "recovery",
+    "strain",
+  ];
   const goToPrevOverlay = () => {
     if (expandedWhoop === null) return;
     setOverlayReveal(false);
@@ -381,7 +422,7 @@ export default function DashboardOverview() {
   const syncWhoop = async () => {
     setSyncLoading(true);
     try {
-      const res = await fetch(`${WORKFLOWS_URL}/api/sync-health`, {
+      const res = await fetch("/api/sync-health", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ elderId: "margaret" }),
@@ -390,30 +431,44 @@ export default function DashboardOverview() {
       const data = await res.json();
       const scores = data?.scores;
       if (scores) {
-        const num = (v: unknown) => (typeof v === "number" && !Number.isNaN(v) ? v : undefined);
+        const num = (v: unknown) =>
+          typeof v === "number" && !Number.isNaN(v) ? v : undefined;
         setWhoopData((prev) => ({
           sleep: num(scores.sleep) ?? prev.sleep,
-          sleepConsistency: num(scores.sleepConsistency) ?? prev.sleepConsistency,
+          sleepConsistency:
+            num(scores.sleepConsistency) ?? prev.sleepConsistency,
           sleepEfficiency: num(scores.sleepEfficiency) ?? prev.sleepEfficiency,
           recovery: num(scores.recovery) ?? prev.recovery,
-          recoveryRestingHeartRate: num(scores.recoveryRestingHeartRate) ?? prev.recoveryRestingHeartRate,
-          recoveryHrvRmssdMilli: num(scores.recoveryHrvRmssdMilli) ?? prev.recoveryHrvRmssdMilli,
-          recoverySpo2Percentage: num(scores.recoverySpo2Percentage) ?? prev.recoverySpo2Percentage,
+          recoveryRestingHeartRate:
+            num(scores.recoveryRestingHeartRate) ??
+            prev.recoveryRestingHeartRate,
+          recoveryHrvRmssdMilli:
+            num(scores.recoveryHrvRmssdMilli) ?? prev.recoveryHrvRmssdMilli,
+          recoverySpo2Percentage:
+            num(scores.recoverySpo2Percentage) ?? prev.recoverySpo2Percentage,
           strainPercent: num(scores.strainPercent) ?? prev.strainPercent,
           strainKilojoule: num(scores.strainKilojoule) ?? prev.strainKilojoule,
-          strainAverageHeartRate: num(scores.strainAverageHeartRate) ?? prev.strainAverageHeartRate,
-          strainMaxHeartRate: num(scores.strainMaxHeartRate) ?? prev.strainMaxHeartRate,
+          strainAverageHeartRate:
+            num(scores.strainAverageHeartRate) ?? prev.strainAverageHeartRate,
+          strainMaxHeartRate:
+            num(scores.strainMaxHeartRate) ?? prev.strainMaxHeartRate,
         }));
       }
-      if (Array.isArray(data?.sleep) || Array.isArray(data?.cycle) || Array.isArray(data?.recovery)) {
+      if (
+        Array.isArray(data?.sleep) ||
+        Array.isArray(data?.cycle) ||
+        Array.isArray(data?.recovery)
+      ) {
         const cache = {
           sleep: data.sleep ?? [],
           recovery: data.recovery ?? [],
           cycle: data.cycle ?? [],
         };
         setWeeklyWhoopCache(cache);
-        if (typeof window !== "undefined") localStorage.setItem(WHOOP_CACHE_KEY, JSON.stringify(cache));
-        const { sleepBar, recoveryBar, strainBar } = deriveOverlayDataFromCache(cache);
+        if (typeof window !== "undefined")
+          localStorage.setItem(WHOOP_CACHE_KEY, JSON.stringify(cache));
+        const { sleepBar, recoveryBar, strainBar } =
+          deriveOverlayDataFromCache(cache);
         setSleepOverlayBarData(sleepBar);
         setRecoveryOverlayBarData(recoveryBar);
         setStrainOverlayBarData(strainBar);
@@ -438,15 +493,25 @@ export default function DashboardOverview() {
   }));
 
   // Derive alerts from latest session
-  const alerts: { title: string; description: string; level: string; time: string }[] = [];
+  const alerts: {
+    title: string;
+    description: string;
+    level: string;
+    time: string;
+  }[] = [];
   if (latestSession?.analysis_result?.rule_based?.markers) {
-    const flagged = latestSession.analysis_result.rule_based.markers.filter((m) => m.flagged);
+    const flagged = latestSession.analysis_result.rule_based.markers.filter(
+      (m) => m.flagged
+    );
     flagged.forEach((m) => {
       alerts.push({
         level: m.severity === "severe" ? "critical" : "warning",
         title: `Flagged: ${m.marker.replace(/_/g, " ")}`,
-        description: m.evidence?.[0] || `Value: ${m.value} (threshold: ${m.threshold})`,
-        time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+        description:
+          m.evidence?.[0] || `Value: ${m.value} (threshold: ${m.threshold})`,
+        time: latestSession.timestamp
+          ? new Date(latestSession.timestamp).toLocaleTimeString()
+          : "Recent",
       });
     });
   }
@@ -454,22 +519,32 @@ export default function DashboardOverview() {
     alerts.push({
       level: "success",
       title: "All markers normal",
-      description: latestSession.analysis_result?.rule_based_summary || "No concerns detected",
-      time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+      description:
+        latestSession.analysis_result?.rule_based_summary ||
+        "No concerns detected",
+      time: latestSession.timestamp
+        ? new Date(latestSession.timestamp).toLocaleTimeString()
+        : "Recent",
     });
   }
 
   // Derive recent conversations from sessions
-  const recentConversations = allSessions.slice().reverse().slice(0, 5).map((s, i) => {
-    const markerCount = s.analysis_result?.rule_based?.markers?.filter((m) => m.flagged).length ?? 0;
-    return {
-      id: String(i + 1),
-      time: s.session_date || new Date(s.timestamp).toLocaleString(),
-      duration: `${s.analysis_result?.rule_based?.total_words ?? 0} words`,
-      markers: markerCount,
-      summary: s.analysis_result?.rule_based_summary || "Session recorded",
-    };
-  });
+  const recentConversations = allSessions
+    .slice()
+    .reverse()
+    .slice(0, 5)
+    .map((s, i) => {
+      const markerCount =
+        s.analysis_result?.rule_based?.markers?.filter((m) => m.flagged)
+          .length ?? 0;
+      return {
+        id: String(i + 1),
+        time: s.session_date || new Date(s.timestamp).toLocaleString(),
+        duration: `${s.analysis_result?.rule_based?.total_words ?? 0} words`,
+        markers: markerCount,
+        summary: s.analysis_result?.rule_based_summary || "Session recorded",
+      };
+    });
 
   // Latest cognitive score
   const latestCogScore = latestSession
@@ -498,7 +573,8 @@ export default function DashboardOverview() {
             <div
               className="w-3 h-3 rounded-full bg-alert-green shrink-0"
               style={{
-                boxShadow: "0 0 8px 2px rgba(126, 200, 184, 0.8), 0 0 16px 4px rgba(126, 200, 184, 0.4)",
+                boxShadow:
+                  "0 0 8px 2px rgba(126, 200, 184, 0.8), 0 0 16px 4px rgba(126, 200, 184, 0.4)",
               }}
             />
             <span className="text-xs text-gray-500">Whoop</span>
@@ -525,7 +601,8 @@ export default function DashboardOverview() {
             <div
               className="w-3 h-3 rounded-full bg-alert-red shrink-0"
               style={{
-                boxShadow: "0 0 8px 2px rgba(217, 123, 123, 0.8), 0 0 16px 4px rgba(217, 123, 123, 0.4)",
+                boxShadow:
+                  "0 0 8px 2px rgba(217, 123, 123, 0.8), 0 0 16px 4px rgba(217, 123, 123, 0.4)",
               }}
             />
             <span className="text-gray-500 hover:text-gray-700 mr-2">
@@ -544,7 +621,9 @@ export default function DashboardOverview() {
                 <span className="text-white font-black text-xs">W</span>
               </div>
               <div>
-                <CardTitle className="text-lg font-bold">Whoop Health Insights</CardTitle>
+                <CardTitle className="text-lg font-bold">
+                  Whoop Health Insights
+                </CardTitle>
                 <p className="text-xs text-gray-400">Daily scores</p>
               </div>
             </div>
@@ -590,7 +669,9 @@ export default function DashboardOverview() {
 
         {expandedWhoop !== null && (
           <div
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/65 transition-opacity duration-300 ${backdropReveal ? "opacity-100" : "opacity-0"}`}
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/65 transition-opacity duration-300 ${
+              backdropReveal ? "opacity-100" : "opacity-0"
+            }`}
             onClick={closeWhoopOverlay}
             role="dialog"
             aria-modal="true"
@@ -624,7 +705,7 @@ export default function DashboardOverview() {
                         className="shrink-0 transition-opacity duration-500 ease-out"
                         style={{
                           opacity: overlayReveal ? 1 : 0,
-                          transitionDelay: "0ms"
+                          transitionDelay: "0ms",
                         }}
                       >
                         <CircularProgress
@@ -640,26 +721,45 @@ export default function DashboardOverview() {
                         className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
                         style={{
                           opacity: overlayReveal ? 1 : 0,
-                          transitionDelay: "150ms"
+                          transitionDelay: "150ms",
                         }}
                       >
                         {[
-                          { label: "Sleep amount vs. needed", value: whoopData.sleep },
-                          { label: "Sleep consistency", value: whoopData.sleepConsistency ?? 0 },
-                          { label: "Sleep efficiency", value: whoopData.sleepEfficiency ?? 0 },
+                          {
+                            label: "Sleep amount vs. needed",
+                            value: whoopData.sleep,
+                          },
+                          {
+                            label: "Sleep consistency",
+                            value: whoopData.sleepConsistency ?? 0,
+                          },
+                          {
+                            label: "Sleep efficiency",
+                            value: whoopData.sleepEfficiency ?? 0,
+                          },
                         ].map(({ label, value }) => {
                           const pct = Math.round(Number(value));
                           const color = getWhoopColor(pct);
                           return (
                             <div key={label} className="flex flex-col gap-2">
                               <div className="flex justify-between items-baseline">
-                                <span className="text-sm font-medium text-white">{label}</span>
-                                <span className="text-sm font-semibold text-white">{pct}%</span>
+                                <span className="text-sm font-medium text-white">
+                                  {label}
+                                </span>
+                                <span className="text-sm font-semibold text-white">
+                                  {pct}%
+                                </span>
                               </div>
                               <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all duration-500 ease-out"
-                                  style={{ width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: color }}
+                                  style={{
+                                    width: `${Math.min(
+                                      100,
+                                      Math.max(0, pct)
+                                    )}%`,
+                                    backgroundColor: color,
+                                  }}
                                 />
                               </div>
                             </div>
@@ -671,17 +771,45 @@ export default function DashboardOverview() {
                       className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
                       style={{
                         opacity: overlayReveal ? 1 : 0,
-                        transitionDelay: "300ms"
+                        transitionDelay: "300ms",
                       }}
                     >
-                      <p className="text-sm font-semibold text-white mb-3">Sleep performance (7 days)</p>
+                      <p className="text-sm font-semibold text-white mb-3">
+                        Sleep performance (7 days)
+                      </p>
                       <ResponsiveContainer width="100%" height={120}>
-                        <BarChart data={sleepOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                          <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                        <BarChart
+                          data={sleepOverlayBarData}
+                          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                        >
+                          <XAxis
+                            dataKey="day"
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={{ stroke: "rgba(255,255,255,0.3)" }}
+                          />
+                          <YAxis
+                            domain={[0, 100]}
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={28}
+                          />
+                          <Bar
+                            dataKey="score"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={40}
+                          >
                             {sleepOverlayBarData.map((entry, index) => (
-                              <Cell key={index} fill={getWhoopColor(entry.score)} />
+                              <Cell
+                                key={index}
+                                fill={getWhoopColor(entry.score)}
+                              />
                             ))}
                           </Bar>
                         </BarChart>
@@ -694,7 +822,10 @@ export default function DashboardOverview() {
                     <div className="flex items-center justify-center gap-16">
                       <div
                         className="shrink-0 transition-opacity duration-500 ease-out"
-                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "0ms",
+                        }}
                       >
                         <CircularProgress
                           value={whoopData.recovery}
@@ -707,27 +838,60 @@ export default function DashboardOverview() {
                       </div>
                       <div
                         className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
-                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "150ms",
+                        }}
                       >
                         {[
-                          { label: "Resting heart rate", value: whoopData.recoveryRestingHeartRate ?? 0, max: 120, invert: true },
-                          { label: "Heart rate variability", value: whoopData.recoveryHrvRmssdMilli ?? 0, max: 100, invert: false },
-                          { label: "Respiratory frequency", value: whoopData.recoverySpo2Percentage ?? 0, max: 100, invert: false },
+                          {
+                            label: "Resting heart rate",
+                            value: whoopData.recoveryRestingHeartRate ?? 0,
+                            max: 120,
+                            invert: true,
+                          },
+                          {
+                            label: "Heart rate variability",
+                            value: whoopData.recoveryHrvRmssdMilli ?? 0,
+                            max: 100,
+                            invert: false,
+                          },
+                          {
+                            label: "Respiratory frequency",
+                            value: whoopData.recoverySpo2Percentage ?? 0,
+                            max: 100,
+                            invert: false,
+                          },
                         ].map(({ label, value, max, invert }) => {
-                          const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+                          const pct =
+                            max > 0
+                              ? Math.min(100, Math.max(0, (value / max) * 100))
+                              : 0;
                           const colorPct = invert ? 100 - pct : pct;
                           const color = getWhoopColor(colorPct);
-                          const display = label === "Heart rate variability" ? `${Number(value).toFixed(1)} ms` : label === "Resting heart rate" ? `${Math.round(value)} bpm` : `${Math.round(value)}%`;
+                          const display =
+                            label === "Heart rate variability"
+                              ? `${Number(value).toFixed(1)} ms`
+                              : label === "Resting heart rate"
+                              ? `${Math.round(value)} bpm`
+                              : `${Math.round(value)}%`;
                           return (
                             <div key={label} className="flex flex-col gap-2">
                               <div className="flex justify-between items-baseline">
-                                <span className="text-sm font-medium text-white">{label}</span>
-                                <span className="text-sm font-semibold text-white">{display}</span>
+                                <span className="text-sm font-medium text-white">
+                                  {label}
+                                </span>
+                                <span className="text-sm font-semibold text-white">
+                                  {display}
+                                </span>
                               </div>
                               <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all duration-500 ease-out"
-                                  style={{ width: `${pct}%`, backgroundColor: color }}
+                                  style={{
+                                    width: `${pct}%`,
+                                    backgroundColor: color,
+                                  }}
                                 />
                               </div>
                             </div>
@@ -737,16 +901,47 @@ export default function DashboardOverview() {
                     </div>
                     <div
                       className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
-                      style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
+                      style={{
+                        opacity: overlayReveal ? 1 : 0,
+                        transitionDelay: "300ms",
+                      }}
                     >
-                      <p className="text-sm font-semibold text-white mb-3">Recovery score (7 days)</p>
+                      <p className="text-sm font-semibold text-white mb-3">
+                        Recovery score (7 days)
+                      </p>
                       <ResponsiveContainer width="100%" height={120}>
-                        <BarChart data={recoveryOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                          <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                        <BarChart
+                          data={recoveryOverlayBarData}
+                          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                        >
+                          <XAxis
+                            dataKey="day"
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={{ stroke: "rgba(255,255,255,0.3)" }}
+                          />
+                          <YAxis
+                            domain={[0, 100]}
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={28}
+                          />
+                          <Bar
+                            dataKey="score"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={40}
+                          >
                             {recoveryOverlayBarData.map((entry, index) => (
-                              <Cell key={index} fill={getWhoopColor(entry.score)} />
+                              <Cell
+                                key={index}
+                                fill={getWhoopColor(entry.score)}
+                              />
                             ))}
                           </Bar>
                         </BarChart>
@@ -759,7 +954,10 @@ export default function DashboardOverview() {
                     <div className="flex items-center justify-center gap-16">
                       <div
                         className="shrink-0 transition-opacity duration-500 ease-out"
-                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "0ms" }}
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "0ms",
+                        }}
                       >
                         <CircularProgress
                           value={whoopData.strainPercent}
@@ -772,29 +970,59 @@ export default function DashboardOverview() {
                       </div>
                       <div
                         className="flex flex-col gap-6 min-w-[280px] transition-opacity duration-500 ease-out"
-                        style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "150ms" }}
+                        style={{
+                          opacity: overlayReveal ? 1 : 0,
+                          transitionDelay: "150ms",
+                        }}
                       >
                         {(() => {
                           const kj = whoopData.strainKilojoule ?? 0;
                           const calories = Math.round(kj / 4.184);
                           const rows = [
-                            { label: "Calories spent", value: calories, display: `${calories} kcal`, max: 3000 },
-                            { label: "Avg heart rate", value: whoopData.strainAverageHeartRate ?? 0, display: `${Math.round(whoopData.strainAverageHeartRate ?? 0)} bpm`, max: 200 },
-                            { label: "Max heart rate", value: whoopData.strainMaxHeartRate ?? 0, display: `${Math.round(whoopData.strainMaxHeartRate ?? 0)} bpm`, max: 200 },
+                            {
+                              label: "Calories spent",
+                              value: calories,
+                              display: `${calories} kcal`,
+                              max: 3000,
+                            },
+                            {
+                              label: "Avg heart rate",
+                              value: whoopData.strainAverageHeartRate ?? 0,
+                              display: `${Math.round(
+                                whoopData.strainAverageHeartRate ?? 0
+                              )} bpm`,
+                              max: 200,
+                            },
+                            {
+                              label: "Max heart rate",
+                              value: whoopData.strainMaxHeartRate ?? 0,
+                              display: `${Math.round(
+                                whoopData.strainMaxHeartRate ?? 0
+                              )} bpm`,
+                              max: 200,
+                            },
                           ];
                           return rows.map(({ label, value, display, max }) => {
-                            const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+                            const pct =
+                              max > 0 ? Math.min(100, (value / max) * 100) : 0;
                             const color = getWhoopColor(pct);
                             return (
                               <div key={label} className="flex flex-col gap-2">
                                 <div className="flex justify-between items-baseline">
-                                  <span className="text-sm font-medium text-white">{label}</span>
-                                  <span className="text-sm font-semibold text-white">{display}</span>
+                                  <span className="text-sm font-medium text-white">
+                                    {label}
+                                  </span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {display}
+                                  </span>
                                 </div>
                                 <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
                                   <div
                                     className="h-full rounded-full transition-all duration-500 ease-out"
-                                    style={{ width: `${pct}%`, backgroundColor: color }}
+                                    style={{
+                                      width: `${pct}%`,
+                                      backgroundColor: color,
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -805,16 +1033,47 @@ export default function DashboardOverview() {
                     </div>
                     <div
                       className="w-full max-w-2xl h-48 p-4 transition-opacity duration-500 ease-out"
-                      style={{ opacity: overlayReveal ? 1 : 0, transitionDelay: "300ms" }}
+                      style={{
+                        opacity: overlayReveal ? 1 : 0,
+                        transitionDelay: "300ms",
+                      }}
                     >
-                      <p className="text-sm font-semibold text-white mb-3">Strain (7 days)</p>
+                      <p className="text-sm font-semibold text-white mb-3">
+                        Strain (7 days)
+                      </p>
                       <ResponsiveContainer width="100%" height={120}>
-                        <BarChart data={strainOverlayBarData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <XAxis dataKey="day" tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={{ stroke: "rgba(255,255,255,0.3)" }} />
-                          <YAxis domain={[0, 21]} tick={{ fontSize: 12, fill: "rgba(255,255,255,0.9)" }} axisLine={false} tickLine={false} width={28} />
-                          <Bar dataKey="strain" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                        <BarChart
+                          data={strainOverlayBarData}
+                          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                        >
+                          <XAxis
+                            dataKey="day"
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={{ stroke: "rgba(255,255,255,0.3)" }}
+                          />
+                          <YAxis
+                            domain={[0, 21]}
+                            tick={{
+                              fontSize: 12,
+                              fill: "rgba(255,255,255,0.9)",
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={28}
+                          />
+                          <Bar
+                            dataKey="strain"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={40}
+                          >
                             {strainOverlayBarData.map((entry, index) => (
-                              <Cell key={index} fill={getWhoopColor((entry.strain / 21) * 100)} />
+                              <Cell
+                                key={index}
+                                fill={getWhoopColor((entry.strain / 21) * 100)}
+                              />
                             ))}
                           </Bar>
                         </BarChart>
@@ -841,35 +1100,40 @@ export default function DashboardOverview() {
             Recent Alerts
           </h2>
           {alerts.length === 0 ? (
-            <p className="text-sm text-gray-400 p-4">No sessions recorded yet. Start a conversation on the mobile app.</p>
+            <p className="text-sm text-gray-400 p-4">
+              No sessions recorded yet. Start a conversation on the mobile app.
+            </p>
           ) : (
             <div className="grid gap-3">
               {alerts.map((alert, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
-                    ? "bg-amber-50/50 border-amber-100"
-                    : alert.level === "critical"
+                  className={`flex items-center gap-4 p-4 rounded-xl border ${
+                    alert.level === "warning"
+                      ? "bg-amber-50/50 border-amber-100"
+                      : alert.level === "critical"
                       ? "bg-red-50/50 border-red-100"
                       : "bg-green-50/50 border-green-100"
-                    }`}
+                  }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
-                      ? "bg-alert-yellow/20"
-                      : alert.level === "critical"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      alert.level === "warning"
+                        ? "bg-alert-yellow/20"
+                        : alert.level === "critical"
                         ? "bg-alert-red/20"
                         : "bg-alert-green/20"
-                      }`}
+                    }`}
                   >
                     {alert.level === "success" ? (
                       <CheckCircle2 className="w-5 h-5 text-alert-green" />
                     ) : (
                       <AlertTriangle
-                        className={`w-5 h-5 ${alert.level === "warning"
-                          ? "text-alert-yellow"
-                          : "text-alert-red"
-                          }`}
+                        className={`w-5 h-5 ${
+                          alert.level === "warning"
+                            ? "text-alert-yellow"
+                            : "text-alert-red"
+                        }`}
                       />
                     )}
                   </div>
@@ -895,8 +1159,18 @@ export default function DashboardOverview() {
             title="Cognitive Score"
             value={latestCogScore !== null ? String(latestCogScore) : "--"}
             unit="/100"
-            trend={latestCogScore !== null && latestCogScore >= 65 ? "up" : latestCogScore !== null ? "down" : "stable"}
-            trendValue={latestSession ? `Risk: ${latestSession.analysis_result?.risk_score ?? "?"}` : "No data"}
+            trend={
+              latestCogScore !== null && latestCogScore >= 65
+                ? "up"
+                : latestCogScore !== null
+                ? "down"
+                : "stable"
+            }
+            trendValue={
+              latestSession
+                ? `Risk: ${latestSession.analysis_result?.risk_score ?? "?"}`
+                : "No data"
+            }
             icon={Brain}
             color="#5B9A8B"
           >
@@ -933,7 +1207,12 @@ export default function DashboardOverview() {
             <div className="h-16">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={activityData}>
-                  <Bar dataKey="steps" fill="#9DC08B" radius={[2, 2, 0, 0]} opacity={0.7} />
+                  <Bar
+                    dataKey="steps"
+                    fill="#9DC08B"
+                    radius={[2, 2, 0, 0]}
+                    opacity={0.7}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -954,7 +1233,9 @@ export default function DashboardOverview() {
                 style={{ width: "95%" }}
               />
             </div>
-            <p className="text-xs text-gray-400 mt-2">19 of 20 doses this week</p>
+            <p className="text-xs text-gray-400 mt-2">
+              19 of 20 doses this week
+            </p>
           </MetricCard>
 
           <MetricCard
@@ -962,23 +1243,30 @@ export default function DashboardOverview() {
             value={String(allSessions.length || 0)}
             unit="conversations"
             trend={allSessions.length > 0 ? "up" : "stable"}
-            trendValue={allSessions.length > 0 ? `${allSessions.length} total` : "No data"}
+            trendValue={
+              allSessions.length > 0 ? `${allSessions.length} total` : "No data"
+            }
             icon={MessageCircle}
             color="#E8B298"
           >
             <div className="flex items-center gap-2 mt-1">
-              {(allSessions.length > 0 ? allSessions.slice(-7) : []).map((s, i) => {
-                const score = s.analysis_result?.risk_score ?? 0;
-                const h = Math.max(6, Math.min(36, Math.round(score * 1.5)));
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              {(allSessions.length > 0 ? allSessions.slice(-7) : []).map(
+                (s, i) => {
+                  const score = s.analysis_result?.risk_score ?? 0;
+                  const h = Math.max(6, Math.min(36, Math.round(score * 1.5)));
+                  return (
                     <div
-                      className="w-full rounded-sm bg-[#E8B298]"
-                      style={{ height: `${h}px`, opacity: 0.7 }}
-                    />
-                  </div>
-                );
-              })}
+                      key={i}
+                      className="flex-1 flex flex-col items-center gap-1"
+                    >
+                      <div
+                        className="w-full rounded-sm bg-[#E8B298]"
+                        style={{ height: `${h}px`, opacity: 0.7 }}
+                      />
+                    </div>
+                  );
+                }
+              )}
             </div>
           </MetricCard>
         </div>
@@ -1003,7 +1291,9 @@ export default function DashboardOverview() {
               </CardHeader>
               <CardContent className="px-0">
                 {recentConversations.length === 0 ? (
-                  <p className="text-sm text-gray-400 px-6 py-4">No conversations yet. Start a chat on the mobile app.</p>
+                  <p className="text-sm text-gray-400 px-6 py-4">
+                    No conversations yet. Start a chat on the mobile app.
+                  </p>
                 ) : (
                   <div className="divide-y divide-gray-50">
                     {recentConversations.map((conv) => (
@@ -1055,22 +1345,26 @@ export default function DashboardOverview() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {upcomingEvents.map((event, i) => {
-                  const isClearCache = "clearCache" in event && event.clearCache;
+                  const isClearCache =
+                    "clearCache" in event && event.clearCache;
                   const Wrapper = isClearCache ? "button" : "div";
                   return (
                     <Wrapper
                       key={i}
                       type={isClearCache ? "button" : undefined}
                       onClick={isClearCache ? clearWhoopCache : undefined}
-                      className={`flex items-center gap-3 w-full text-left ${isClearCache ? "cursor-default" : ""}`}
+                      className={`flex items-center gap-3 w-full text-left ${
+                        isClearCache ? "cursor-default" : ""
+                      }`}
                     >
                       <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${event.type === "medical"
-                          ? "bg-blue-100"
-                          : event.type === "family"
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                          event.type === "medical"
+                            ? "bg-blue-100"
+                            : event.type === "family"
                             ? "bg-orange-100"
                             : "bg-purple-100"
-                          }`}
+                        }`}
                       >
                         {event.type === "medical" ? (
                           <Calendar className="w-4 h-4 text-blue-600" />
