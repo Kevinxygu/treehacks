@@ -384,7 +384,7 @@ export default function TranscriptPage() {
                           <span className="text-xs font-medium text-gray-500">
                             {entry.speaker === "user"
                               ? "Margaret"
-                              : "CareCompanion"}
+                              : "Bloom"}
                           </span>
                           <span className="text-xs text-gray-300">
                             {entry.timestamp}

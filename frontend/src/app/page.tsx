@@ -28,14 +28,14 @@ const problemCards = [
     title: "Tech Has Left Seniors Behind",
     description:
       "Ever helped your grandparents with an iPad? What happens when they need to manage medicine or health records on vacation? Modern technology has become too complex for those who need it most.",
-    color: "#E8B298",
+    color: "#5B9A8B",
     image: "/images/issue-1-graphic.png",
   },
   {
     icon: Heart,
     title: "Loneliness Fuels Dementia",
     description: "Loneliness increases dementia risk by 50%. Limited social interactions contribute to cognitive decline, which is painful for patients, families, and caregivers alike.",
-    color: "#8B9DC0",
+    color: "#5B9A8B",
     image: "/images/issue-2-graphic.png",
   },
   {
@@ -43,7 +43,7 @@ const problemCards = [
     title: "Aging Population Crisis",
     description:
       "By 2030, one in six people worldwide will be over 65 and this will double by 2050. Healthcare systems urgently need innovative solutions to support this demographic shift.",
-    color: "#9DC08B",
+    color: "#5B9A8B",
     image: "/images/issue-3-graphic.png",
   },
 ];
@@ -62,7 +62,7 @@ const solutionFeatures = [
     title: "Passive Biomarker Detection",
     description:
       "AI analyzes speech for early warning signs: reduced vocabulary range, word-finding pauses (like forgetting 'refrigerator'), and changes in speech patterns.",
-    color: "#7EC8B8",
+    color: "#5B9A8B",
     image: "/images/solution-2-graphic.png",
   },
   {
@@ -78,7 +78,7 @@ const solutionFeatures = [
     title: "Empowering Healthcare Providers",
     description:
       "Real-time dashboards and exportable reports give doctors and families the resources they need to support the growing elderly population.",
-    color: "#8B9DC0",
+    color: "#5B9A8B",
     image: "/images/solution-4-graphic.png",
   },
 ];
@@ -143,10 +143,14 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#E5EBE8]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5B9A8B] to-[#7EC8B8] flex items-center justify-center shadow-sm">
-              <Activity className="w-4.5 h-4.5 text-white" />
-            </div>
-            <span className="font-semibold text-lg text-[#2D3B36]">CareCompanion</span>
+            <Image
+              src="/images/logo-dark.png"
+              alt="Bloom Logo"
+              width={36}
+              height={36}
+              className="rounded-xl shadow-sm"
+            />
+            <span className="font-semibold text-lg text-[#2D3B36]">Bloom</span>
           </div>
           <div className="hidden md:flex items-center gap-10">
             <a href="#features" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
@@ -154,9 +158,6 @@ export default function LandingPage() {
             </a>
             <a href="#research" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
               Research
-            </a>
-            <a href="#team" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
-              Team
             </a>
           </div>
           <div className="flex items-center gap-3">
@@ -316,7 +317,7 @@ export default function LandingPage() {
       </section>
 
       {/* Our Solution */}
-      <section id="solution" className="py-28 bg-white">
+      <section id="features" className="py-28 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-24">
             <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
@@ -434,7 +435,7 @@ export default function LandingPage() {
                 icon: Mic,
                 title: "Natural Conversation",
                 description:
-                  "Your loved one speaks naturally with CareCompanion. No buttons, no menus — just talk like a friend.",
+                  "Your loved one speaks naturally with Bloom. No buttons, no menus — just talk like a friend.",
               },
               {
                 step: "2",
@@ -689,11 +690,15 @@ export default function LandingPage() {
       <footer className="py-8 bg-[#FAFCFB] border-t border-[#E5EBE8]">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#5B9A8B] to-[#7EC8B8] flex items-center justify-center">
-              <Activity className="w-3.5 h-3.5 text-white" />
-            </div>
+            <Image
+              src="/images/logo-dark.png"
+              alt="Bloom Logo"
+              width={28}
+              height={28}
+              className="rounded-lg"
+            />
             <span className="text-sm font-medium text-[#6B7C74]">
-              CareCompanion
+              Bloom
             </span>
           </div>
           <p className="text-sm text-[#9CA8A2]">

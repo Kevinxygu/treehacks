@@ -1,131 +1,85 @@
-import * as FileSystem from "expo-file-system";
-
 // ------------------------------------------------------------------
 // IMPORTANT: Change this to your machine's local IP when testing on
 // a physical device.  "localhost" only works in the iOS simulator.
 //
 //   macOS:  ifconfig | grep "inet " | grep -v 127.0.0.1
-//   The backend runs on port 8000 by default (uvicorn).
+//   The Express backend runs on port 3001.
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
-  ? "http://localhost:8000" // simulator / same machine
-  : "https://your-production-api.com"; // production
+    ? "http://10.19.176.35:3001" // your Mac's IP on local network
+    : "https://your-production-api.com"; // production
 
 // ---------- Types ----------
 
-export interface AnalysisResult {
-  ai_summary: string;
-  risk_score: number;
-  rule_based_summary: string;
-  session_id: string;
-  session_date: string;
-  rule_based: {
-    session_id: string;
-    session_date: string;
-    total_words: number;
-    unique_words: number;
-    total_sentences: number;
-    risk_score: number;
-    summary: string;
-    flagged_excerpts: string[];
-    markers: {
-      category: string;
-      marker: string;
-      value: number;
-      threshold: number;
-      flagged: boolean;
-      severity: string;
-      evidence: string[];
-    }[];
-    raw_metrics: Record<string, number | string[]>;
-  };
+export interface VoiceChatResult {
+    transcript: string;
+    response: string;
+    audioBase64: string | null;
+}
+
+export interface ChatMessage {
+    role: "user" | "assistant";
+    content: string;
 }
 
 // ---------- API Calls ----------
 
 /**
- * Upload a recorded audio file to the backend for transcription +
- * cognitive analysis.  The backend is expected to:
- *   1. Transcribe the audio (Vital API / Whisper / etc.)
- *   2. Run rule-based analysis
- *   3. Generate an AI summary
- *   4. Return the full AnalysisResult
- *
- * Until that endpoint exists we fall back to /analyze-transcript-ai
- * with dummy text so the rest of the pipeline works.
+ * Send a recorded audio file + conversation history to the backend.
+ * Uses fetch + FormData which is reliable across all React Native versions.
  */
-export async function uploadAudioForAnalysis(
-  audioUri: string,
-  sessionId: string,
-): Promise<AnalysisResult> {
-  const today = new Date();
-  const sessionDate = `${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}-${today.getFullYear()}`;
+export async function voiceChat(audioUri: string, messages: ChatMessage[]): Promise<VoiceChatResult> {
+    const formData = new FormData();
 
-  // Try the audio upload endpoint first
-  try {
-    const response = await FileSystem.uploadAsync(
-      `${API_BASE}/upload-audio`,
-      audioUri,
-      {
-        fieldName: "audio_file",
-        httpMethod: "POST",
-        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-        parameters: {
-          session_id: sessionId,
-          session_date: sessionDate,
-        },
-      },
-    );
+    // React Native's FormData accepts this shape for file uploads
+    formData.append("audio", {
+        uri: audioUri,
+        type: "audio/m4a",
+        name: "recording.m4a",
+    } as any);
 
-    if (response.status === 200) {
-      return JSON.parse(response.body);
+    formData.append("messages", JSON.stringify(messages));
+
+    const response = await fetch(`${API_BASE}/api/voice-chat`, {
+        method: "POST",
+        body: formData,
+        // Don't set Content-Type — fetch sets it automatically with the boundary
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Voice chat failed: ${response.status} - ${text}`);
     }
-  } catch {
-    // endpoint might not exist yet — fall through
-  }
 
-  // Fallback: send a placeholder transcript
-  return analyzeTranscript(
-    "This is a placeholder transcript from the mobile recording.",
-    sessionId,
-    sessionDate,
-  );
+    return response.json();
 }
 
 /**
- * Send an already-transcribed text to the backend for
- * rule-based + AI analysis.
+ * Text-only chat with the AI agent (no voice).
+ * Returns the AI's text response.
  */
-export async function analyzeTranscript(
-  transcript: string,
-  sessionId: string,
-  sessionDate: string,
-): Promise<AnalysisResult> {
-  const res = await fetch(`${API_BASE}/analyze-transcript-ai`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      transcript,
-      session_id: sessionId,
-      session_date: sessionDate,
-    }),
-  });
+export async function textChat(messages: ChatMessage[]): Promise<{ response: string }> {
+    const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+    });
 
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
+    if (!res.ok) {
+        throw new Error(`Chat failed: ${res.status}`);
+    }
 
-  return res.json();
+    return res.json();
 }
 
 /**
- * Health-check – useful to verify the backend is reachable.
+ * Health-check — verify the backend is reachable.
  */
 export async function ping(): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE}/`);
-    return res.ok;
-  } catch {
-    return false;
-  }
+    try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        return res.ok;
+    } catch {
+        return false;
+    }
 }

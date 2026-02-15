@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CareCompanion",
-    "slug": "carecompanion",
+    "name": "Bloom",
+    "slug": "bloom",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,16 +12,16 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.carecompanion.app",
+      "bundleIdentifier": "ai.bloom.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "CareCompanion needs microphone access to listen to your voice and help with tasks."
+        "NSMicrophoneUsageDescription": "Bloom needs microphone access to listen to your voice and help with tasks."
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F0F7FF"
       },
-      "package": "com.carecompanion.app",
+      "package": "ai.bloom.app",
       "permissions": [
         "RECORD_AUDIO"
       ]
@@ -30,7 +30,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "CareCompanion needs microphone access to listen to your voice and help with tasks."
+          "microphonePermission": "Bloom needs microphone access to listen to your voice and help with tasks."
         }
       ],
       "expo-asset"
