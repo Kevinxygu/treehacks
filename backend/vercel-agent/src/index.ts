@@ -75,7 +75,8 @@ async function textToSpeech(text: string): Promise<Buffer> {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Speech diagnosis (Deepgram: transcript + sentiment)                */
+/*  Speech diagnosis (Deepgram: transcript + sentiment)               */
+/*  See: https://developers.deepgram.com/docs/audio-intelligence       */
 /* ------------------------------------------------------------------ */
 
 const DEEPGRAM_BASE = "https://api.deepgram.com/v1";
@@ -103,7 +104,7 @@ async function getSpeechDiagnosis(audioBuffer: Buffer, contentType: string): Pro
         throw new Error("DEEPGRAM_API_KEY is not set");
     }
 
-    const url = `${DEEPGRAM_BASE}/listen?sentiment=true&language=en`;
+    const url = `${DEEPGRAM_BASE}/listen?sentiment=true&language=en&model=nova-2`;
     const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -262,6 +263,10 @@ app.post("/api/speech-diagnosis", upload.single("audio"), async (req, res) => {
         }
 
         const contentType = req.file.mimetype || "audio/webm";
+        if (req.file.size === 0) {
+            res.status(400).json({ error: "Audio file is empty. Record for at least a few seconds and try again." });
+            return;
+        }
         console.log(`  [Speech diagnosis] Analyzing ${req.file.size} bytes (${contentType})...`);
 
         const diagnosis = await getSpeechDiagnosis(req.file.buffer, contentType);
