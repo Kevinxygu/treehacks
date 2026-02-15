@@ -1,4 +1,6 @@
-const FASTAPI_BASE = process.env.NEXT_PUBLIC_FASTAPI_URL || "http://localhost:8000";
+const FASTAPI_BASE =
+  (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_BACKEND_URL) ||
+  "http://localhost:8000";
 
 // ---------- Session types ----------
 
@@ -46,10 +48,24 @@ export async function fetchLatestSession(): Promise<SessionEntry | null> {
   return data;
 }
 
+const FETCH_TIMEOUT_MS = 20000;
+
 export async function fetchAllSessions(): Promise<SessionEntry[]> {
-  const res = await fetch(`${FASTAPI_BASE}/sessions`);
-  if (!res.ok) return [];
-  return res.json();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${FASTAPI_BASE}/sessions`, { signal: controller.signal });
+    if (!res.ok) return [];
+    return res.json();
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError")
+      throw new Error(
+        `Request to ${FASTAPI_BASE}/sessions timed out. Is the backend running? Set NEXT_PUBLIC_BACKEND_URL if it runs elsewhere.`
+      );
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function fetchWhoopSleep() {

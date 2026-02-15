@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from pydantic import BaseModel
 import requests
@@ -121,14 +122,24 @@ async def analyze_single_transcript(req: TranscriptRequest):
     return result
 
 
+def _analyze_transcript_ai_sync(transcript: str, session_id: str, session_date: str):
+    """Blocking workflow: rule-based + Claude summary. Run in thread so event loop stays free."""
+    rule_based = analyze_transcript(transcript, session_id, session_date)
+    ai_result = generate_summary(rule_based)
+    return {**ai_result, "rule_based": rule_based}
+
+
 @app.post("/analyze-transcript-ai")
 async def analyze_single_transcript_ai(req: TranscriptRequest):
     """Analyze a transcript with rule-based scoring + Claude AI summary and interventions."""
-    rule_based = analyze_transcript(req.transcript, req.session_id, req.session_date)
-    ai_result = generate_summary(rule_based)
-    result = {**ai_result, "rule_based": rule_based}
+    result = await asyncio.to_thread(
+        _analyze_transcript_ai_sync,
+        req.transcript,
+        req.session_id,
+        req.session_date,
+    )
 
-    # Auto-save to in-memory session store
+    # Auto-save to in-memory session store (fast, in main thread)
     _sessions.append({
         "transcript": req.transcript,
         "analysis_result": result,
@@ -162,13 +173,18 @@ async def analyze_multiple_sessions(req: LongitudinalRequest):
     return result
 
 
+def _analyze_sessions_ai_sync(sessions: list[dict]):
+    """Blocking workflow: rule-based + Claude longitudinal summary. Run in thread."""
+    rule_based = analyze_sessions(sessions)
+    ai_result = generate_longitudinal_summary(rule_based)
+    return {**ai_result, "rule_based": rule_based}
+
+
 @app.post("/analyze-sessions-ai")
 async def analyze_multiple_sessions_ai(req: LongitudinalRequest):
     """Analyze multiple sessions with rule-based scoring + Claude AI trends and interventions."""
     sessions = [{"text": s.text, "session_id": s.session_id, "date": s.date} for s in req.sessions]
-    rule_based = analyze_sessions(sessions)
-    ai_result = generate_longitudinal_summary(rule_based)
-    return {**ai_result, "rule_based": rule_based}
+    return await asyncio.to_thread(_analyze_sessions_ai_sync, sessions)
 
 
 @app.post("/preventative-care-recommendations")
@@ -176,7 +192,8 @@ async def get_preventative_care_recommendations_endpoint(req: PreventativeCareRe
     """
     Generates preventative care recommendations based on provided summaries.
     """
-    recommendations = get_preventative_care_recommendations(
+    recommendations = await asyncio.to_thread(
+        get_preventative_care_recommendations,
         req.ai_summary,
     )
     return recommendations

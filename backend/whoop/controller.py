@@ -1,3 +1,4 @@
+import asyncio
 import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
@@ -44,7 +45,7 @@ async def whoop_callback(code: str | None = None, state: str | None = None):
     if not code or not state:
         return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
     try:
-        exchange_code_for_token(code, state)
+        await asyncio.to_thread(exchange_code_for_token, code, state)
         return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=connected")
     except Exception:
         return RedirectResponse(url=f"{FRONTEND_DASHBOARD_URL}?whoop=error")
@@ -54,7 +55,7 @@ async def whoop_callback(code: str | None = None, state: str | None = None):
 async def weekly_sleep():
     """Return sleep data for the past 7 days from WHOOP API."""
     try:
-        records = get_weekly_sleep()
+        records = await asyncio.to_thread(get_weekly_sleep)
         return {"records": records}
     except Exception as e:
         raise _whoop_error(e)
@@ -64,7 +65,7 @@ async def weekly_sleep():
 async def weekly_cycle():
     """Return physiological cycle data (strain, HR) for the past 7 days from WHOOP API."""
     try:
-        records = get_weekly_cycle()
+        records = await asyncio.to_thread(get_weekly_cycle)
         return {"records": records}
     except Exception as e:
         raise _whoop_error(e)
@@ -74,7 +75,7 @@ async def weekly_cycle():
 async def weekly_recovery():
     """Return recovery scores and metrics for the past 7 days from WHOOP API."""
     try:
-        records = get_weekly_recovery()
+        records = await asyncio.to_thread(get_weekly_recovery)
         return {"records": records}
     except Exception as e:
         raise _whoop_error(e)

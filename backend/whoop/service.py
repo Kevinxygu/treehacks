@@ -26,6 +26,9 @@ CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
 WHOOP_DIR = Path(__file__).resolve().parent
 REFRESH_TOKEN_FILE = WHOOP_DIR / ".whoop_refresh_token"
 
+# Timeout for all outbound HTTP calls so a slow/hung WHOOP API doesn't block the server
+REQUEST_TIMEOUT_SEC = 15
+
 
 def _get_refresh_token() -> str | None:
     token = os.environ.get("WHOOP_REFRESH_TOKEN", "").strip()
@@ -54,6 +57,7 @@ def refresh_access_token() -> tuple[str, str]:
             "scope": SCOPES,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=REQUEST_TIMEOUT_SEC,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -119,13 +123,14 @@ def run_oauth_flow() -> str:
             "redirect_uri": LOCAL_REDIRECT_URI,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=REQUEST_TIMEOUT_SEC,
     )
     resp.raise_for_status()
     data = resp.json()
     new_refresh = data.get("refresh_token")
     if new_refresh:
         _set_refresh_token(new_refresh)
-        print("Refresh token saved to", REFRESH_TOKEN_FILE)
+    print("Refresh token saved to", REFRESH_TOKEN_FILE)
     return data["access_token"]
 
 
@@ -156,6 +161,7 @@ def exchange_code_for_token(code: str, state: str) -> None:
             "redirect_uri": REDIRECT_URI,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=REQUEST_TIMEOUT_SEC,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -189,7 +195,7 @@ def get_weekly_sleep() -> list[dict]:
         "Content-Type": "application/json",
     }
     url = f"{API_BASE}/v2/activity/sleep"
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params, timeout=REQUEST_TIMEOUT_SEC)
     response.raise_for_status()
     data = response.json()
     return data.get("records", [])
@@ -218,7 +224,7 @@ def _default_range_params() -> dict:
 
 def get_weekly_cycle() -> list[dict]:
     url = f"{API_BASE}/v2/cycle"
-    response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
+    response = requests.get(url, headers=_auth_headers(), params=_default_range_params(), timeout=REQUEST_TIMEOUT_SEC)
     response.raise_for_status()
     data = response.json()
     return data.get("records", [])
@@ -226,7 +232,7 @@ def get_weekly_cycle() -> list[dict]:
 
 def get_weekly_recovery() -> list[dict]:
     url = f"{API_BASE}/v2/recovery"
-    response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
+    response = requests.get(url, headers=_auth_headers(), params=_default_range_params(), timeout=REQUEST_TIMEOUT_SEC)
     response.raise_for_status()
     data = response.json()
     return data.get("records", [])

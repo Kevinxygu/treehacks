@@ -49,6 +49,7 @@ function parseTranscriptToEntries(transcript: string): TranscriptEntry[] {
 export default function TranscriptPage() {
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedConversation, setSelectedConversation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime] = useState("--:--:--");
@@ -56,10 +57,12 @@ export default function TranscriptPage() {
   useEffect(() => {
     async function load() {
       try {
+        setError(null);
         const data = await fetchAllSessions();
         setSessions(data.reverse()); // newest first
       } catch (err) {
         console.error("Failed to fetch sessions:", err);
+        setError(err instanceof Error ? err.message : "Failed to load sessions");
       } finally {
         setLoading(false);
       }
@@ -72,6 +75,17 @@ export default function TranscriptPage() {
       <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
         <span className="ml-3 text-gray-500">Loading transcripts...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto text-center py-20">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Could not load transcripts</h2>
+        <p className="text-gray-500 mb-4">{error}</p>
+        <p className="text-sm text-gray-400">Ensure the backend is running on port 8000 and try again.</p>
       </div>
     );
   }
