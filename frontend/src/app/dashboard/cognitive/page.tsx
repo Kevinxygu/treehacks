@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
+import { PreventativeCareRecommendations } from "@/components/PreventativeCareRecommendations";
 
 // --- Session Results Data ---
 const sessionResults = {
@@ -546,6 +547,8 @@ export default function CognitiveAnalysisPage() {
           </CardContent>
         )}
       </Card>
+
+      <PreventativeCareRecommendations sessionResults={sessionResults} />
 
       {/* AI Summary */}
       <Card className="border-0 shadow-sm bg-white">
