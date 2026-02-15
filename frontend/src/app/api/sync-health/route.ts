@@ -18,6 +18,12 @@ export async function POST(request: Request) {
     headers,
     body: JSON.stringify(body),
   });
-  const data = await res.json().catch(() => ({}));
+  const contentType = res.headers.get("content-type");
+  const data =
+    contentType?.includes("application/json")
+      ? await res.json().catch(() => ({}))
+      : { error: true, message: await res.text().catch(() => "Unknown error") };
+  if (!res.ok && typeof data === "object" && !("error" in data))
+    (data as Record<string, unknown>).error = true;
   return Response.json(data, { status: res.status });
 }

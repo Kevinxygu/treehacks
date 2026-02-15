@@ -73,47 +73,54 @@ LATEST_PHOTOS_LIMIT = 5
 
 @router.get("/family-photos")
 async def family_photos(family_id: str = "default"):
-    bucket = _get_bucket()
+    empty = {"photos": [], "syncing": False}
+    try:
+        bucket = _get_bucket()
+    except HTTPException:
+        return empty
     prefix = f"families/{family_id}/"
-    s3 = boto3.client("s3")
-    paginator = s3.get_paginator("list_objects_v2")
-    objects = []
-    pages_info = []
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-        page_contents = page.get("Contents")
-        pages_info.append({
-            "page_content_keys": [obj.get("Key") for obj in (page_contents or [])],
-            "num_contents": len(page_contents) if page_contents else 0,
-        })
-        for obj in page_contents or []:
-            key = obj.get("Key")
-            if key and not key.endswith("/"):
-                objects.append(
-                    {"Key": key, "LastModified": obj.get("LastModified") or ""}
-                )
-    sorted_objects_debug = [{"Key": o["Key"], "LastModified": str(o["LastModified"])} for o in objects]
-    objects.sort(key=lambda x: x["LastModified"], reverse=True)
-    latest = objects[:LATEST_PHOTOS_LIMIT]
-    urls = []
-    for item in latest:
-        url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": bucket, "Key": item["Key"]},
-            ExpiresIn=900,
-        )
-        urls.append(url)
-    result = {
-        "photos": urls,
-        "syncing": _sync_in_progress,
-        "debug": {
-            "family_id": family_id,
-            "bucket": bucket,
-            "prefix": prefix,
-            "pages_info": pages_info,
-            "objects_found": sorted_objects_debug,
-            "num_objects": len(objects),
-            "latest_keys": [item["Key"] for item in latest],
-        },
-    }
-    print("family_photos result:", result)
-    return result
+    try:
+        s3 = boto3.client("s3")
+        paginator = s3.get_paginator("list_objects_v2")
+        objects = []
+        pages_info = []
+        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            page_contents = page.get("Contents")
+            pages_info.append({
+                "page_content_keys": [obj.get("Key") for obj in (page_contents or [])],
+                "num_contents": len(page_contents) if page_contents else 0,
+            })
+            for obj in page_contents or []:
+                key = obj.get("Key")
+                if key and not key.endswith("/"):
+                    objects.append(
+                        {"Key": key, "LastModified": obj.get("LastModified") or ""}
+                    )
+        sorted_objects_debug = [{"Key": o["Key"], "LastModified": str(o["LastModified"])} for o in objects]
+        objects.sort(key=lambda x: x["LastModified"], reverse=True)
+        latest = objects[:LATEST_PHOTOS_LIMIT]
+        urls = []
+        for item in latest:
+            url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": bucket, "Key": item["Key"]},
+                ExpiresIn=900,
+            )
+            urls.append(url)
+        result = {
+            "photos": urls,
+            "syncing": _sync_in_progress,
+            "debug": {
+                "family_id": family_id,
+                "bucket": bucket,
+                "prefix": prefix,
+                "pages_info": pages_info,
+                "objects_found": sorted_objects_debug,
+                "num_objects": len(objects),
+                "latest_keys": [item["Key"] for item in latest],
+            },
+        }
+        print("family_photos result:", result)
+        return result
+    except Exception:
+        return empty

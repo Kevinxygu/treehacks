@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -261,7 +261,7 @@ function MetricCard({
   );
 }
 
-export default function DashboardOverview() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const [whoopConnected, setWhoopConnected] = useState<boolean | null>(null);
   const [whoopLoading, setWhoopLoading] = useState(false);
@@ -1420,5 +1420,19 @@ export default function DashboardOverview() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardOverview() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

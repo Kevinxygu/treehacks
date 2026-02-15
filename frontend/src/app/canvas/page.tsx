@@ -115,7 +115,7 @@ const baseNodes: CanvasNode[] = [
     type: "imageNode",
     position: { x: 100, y: 120 },
     data: {
-      image: "/images/IMG_0772 3.jpg",
+      image: "/images/IMG_0772 3.JPG",
       label: "A Pensive Morning",
       description: "Before a hike up to Panorama Ridge.",
       location: "Panorama Ridge, BC",
@@ -126,7 +126,7 @@ const baseNodes: CanvasNode[] = [
     type: "imageNode",
     position: { x: 380, y: 120 },
     data: {
-      image: "/images/0c9e9304-5694-4780-bd7b-73f1f6daaea4.jpg",
+      image: "/images/0c9e9304-5694-4780-bd7b-73f1f6daaea4.JPG",
       label: "8ams with the fam",
       description: "The muffin was good.",
       location: "Vancouver, BC",
@@ -137,7 +137,7 @@ const baseNodes: CanvasNode[] = [
     type: "imageNode",
     position: { x: 240, y: 250 },
     data: {
-      image: "/images/IMG_0780.jpg",
+      image: "/images/IMG_0780.JPG",
       label: "Mountains!",
       description: "Look at that glow.",
       location: "Panorama Ridge, BC",
@@ -148,7 +148,7 @@ const baseNodes: CanvasNode[] = [
     type: "imageNode",
     position: { x: 80, y: 320 },
     data: {
-      image: "/images/IMG_0688.jpg",
+      image: "/images/IMG_0688.JPG",
       label: "Longboat was hard",
       description: "And why did we have lab coats on?.",
       location: "Jericho Beach, BC",
@@ -159,7 +159,7 @@ const baseNodes: CanvasNode[] = [
     type: "imageNode",
     position: { x: 400, y: 320 },
     data: {
-      image: "/images/IMG_0779 3.jpg",
+      image: "/images/IMG_0779 3.JPG",
       label: "Sunrise above the clouds",
       description: "Surreal.",
       location: "Panorama Ridge, BC",

@@ -101,11 +101,22 @@ function whoopBase(): string {
   return process.env.BACKEND_URL || "https://treehacks-backend-pi.vercel.app";
 }
 
+const backendBypassSecret =
+  process.env.BACKEND_BYPASS_SECRET ||
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
+function backendFetchHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (backendBypassSecret)
+    headers["x-vercel-protection-bypass"] = backendBypassSecret;
+  return headers;
+}
+
 async function fetchWhoopSleep(elderId: string): Promise<SleepRecord[]> {
   "use step";
   console.log("[fetchWhoopSleep] elderId=", elderId);
   const url = `${whoopBase()}/whoop/sleep/weekly`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: backendFetchHeaders() });
   if (!res.ok) throw new Error(`whoop sleep fetch failed: ${res.status}`);
   const data = (await res.json()) as { records: SleepRecord[] };
   const records = data.records ?? [];
@@ -117,7 +128,7 @@ async function fetchWhoopCycle(elderId: string): Promise<CycleRecord[]> {
   "use step";
   console.log("[fetchWhoopCycle] elderId=", elderId);
   const url = `${whoopBase()}/whoop/cycle/weekly`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: backendFetchHeaders() });
   if (!res.ok) throw new Error(`whoop cycle fetch failed: ${res.status}`);
   const data = (await res.json()) as { records: CycleRecord[] };
   const records = data.records ?? [];
@@ -129,7 +140,7 @@ async function fetchWhoopRecovery(elderId: string): Promise<RecoveryRecord[]> {
   "use step";
   console.log("[fetchWhoopRecovery] elderId=", elderId);
   const url = `${whoopBase()}/whoop/recovery/weekly`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: backendFetchHeaders() });
   if (!res.ok) throw new Error(`whoop recovery fetch failed: ${res.status}`);
   const data = (await res.json()) as { records: RecoveryRecord[] };
   const records = data.records ?? [];
