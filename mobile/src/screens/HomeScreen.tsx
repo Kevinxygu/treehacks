@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE + 60,
     height: BUTTON_SIZE + 60,
     borderRadius: (BUTTON_SIZE + 60) / 2,
-    backgroundColor: "rgba(74,144,226,0.18)",
+    backgroundColor: "rgba(91,154,139,0.18)",
   },
 
   // Status

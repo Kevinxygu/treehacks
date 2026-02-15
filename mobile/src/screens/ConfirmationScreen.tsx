@@ -81,7 +81,7 @@ export default function ConfirmationScreen() {
             ]}
           >
             <View style={styles.cardRow}>
-              <View style={[styles.cardIcon, { backgroundColor: "rgba(74,144,226,0.1)" }]}>
+              <View style={[styles.cardIcon, { backgroundColor: "rgba(91,154,139,0.1)" }]}>
                 <Text style={styles.cardEmoji}>📅</Text>
               </View>
               <View style={styles.cardContent}>

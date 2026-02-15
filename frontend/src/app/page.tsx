@@ -6,17 +6,12 @@ import {
   Mic,
   Activity,
   Heart,
-  Shield,
   BarChart3,
-  MessageCircle,
   ArrowRight,
   ChevronRight,
   Stethoscope,
   Users,
-  Sparkles,
-  Clock,
   FileText,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -84,12 +79,12 @@ const solutionFeatures = [
   },
 ];
 
-const stats = [
-  { value: "55M+", label: "Americans affected by cognitive decline" },
-  { value: "40%", label: "Of cases can be delayed or prevented" },
-  { value: "3-5yrs", label: "Earlier detection through voice biomarkers" },
-  { value: "67%", label: "Reduction in loneliness with AI companions" },
-];
+// const stats = [
+//   { value: "55M+", label: "Americans affected by cognitive decline" },
+//   { value: "40%", label: "Of cases can be delayed or prevented" },
+//   { value: "3-5yrs", label: "Earlier detection through voice biomarkers" },
+//   { value: "67%", label: "Reduction in loneliness with AI companions" },
+// ];
 
 const researchPoints = [
   {
@@ -176,7 +171,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-base md:text-lg text-[#6B7C74] leading-relaxed mb-10">
-                While apps got more complicated, seniors got left behind. We're fixing that with a voice-based AI caretaker that completes your chores and prevents cognitive decline.
+                While apps got more complicated, seniors got left behind. We&apos;re fixing that with a voice-based AI caretaker that completes your chores and prevents cognitive decline.
               </p>
 
               <div className="flex items-center gap-4 flex-wrap">
@@ -220,7 +215,7 @@ export default function LandingPage() {
               The Problem
             </h2>
             <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
-              Technology has advanced rapidly, but it's left our most vulnerable population behind.
+              Technology has advanced rapidly, but it&apos;s left our most vulnerable population behind.
             </p>
           </motion.div>
 
@@ -280,7 +275,7 @@ export default function LandingPage() {
               Our Solution
             </h2>
             <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
-              A conversational AI caretaker that's as easy as talking to a friend.
+              A conversational AI caretaker that&apos;s as easy as talking to a friend.
             </p>
           </motion.div>
 
@@ -437,7 +432,7 @@ export default function LandingPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white py-16">
+      { /* <section className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-12 md:px-16 lg:px-24">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -455,7 +450,7 @@ export default function LandingPage() {
             ))}
           </motion.div>
         </div>
-      </section>
+      </section> */}
 
       {/* Two interfaces section */}
       <section className="py-28 bg-[#F8FAF9]">
@@ -568,7 +563,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Team */}
+      {/* leave this out for now - TreeHacks 2026 */}
+      {/* 
       <section id="team" className="py-28 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-16">
@@ -608,6 +604,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-[#5B9A8B] via-[#6BA99A] to-[#7EC8B8]">
@@ -652,7 +649,7 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-sm text-[#9CA8A2]">
-            Built with care at TreeHacks 2026
+            Built with care at Stanford&apos;s TreeHacks 2026
           </p>
         </div>
       </footer>

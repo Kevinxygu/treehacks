@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   bubbleAssistantTyping: {
-    backgroundColor: "rgba(74,144,226,0.1)",
+    backgroundColor: "rgba(91,154,139,0.1)",
     borderTopRightRadius: 8,
     paddingVertical: 18,
     paddingHorizontal: 24,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "rgba(74,144,226,0.5)",
+    backgroundColor: "rgba(91,154,139,0.5)",
   },
 
   // Bottom controls
