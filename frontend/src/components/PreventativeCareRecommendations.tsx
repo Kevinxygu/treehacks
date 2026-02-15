@@ -121,9 +121,8 @@ export const PreventativeCareRecommendations: React.FC<PreventativeCareRecommend
             return (
               <Card
                 key={index}
-                className={`border-2 shadow-sm transition-colors ${
-                  isFollowed ? 'border-green-500' : 'border-gray-200'
-                }`}
+                className={`border-2 shadow-sm transition-colors ${isFollowed ? 'border-green-500' : 'border-gray-200'
+                  }`}
               >
                 <CardHeader>
                   <CardTitle className="text-md font-semibold">{rec["Action title"]}</CardTitle>
