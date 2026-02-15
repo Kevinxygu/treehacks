@@ -5,11 +5,11 @@ import { API_URL, FASTAPI_URL } from "@env";
 // Loaded from .env file for local development
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
-    ? API_URL
+    ? " vercel-agent-two.vercel.app"
     : "https://your-production-api.com"; // production
 
 const FASTAPI_BASE = __DEV__
-    ? FASTAPI_URL
+    ? "https://treehacks-backend-pi.vercel.app"
     : "https://your-production-api.com";
 
 // ---------- Types ----------
