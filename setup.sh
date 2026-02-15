@@ -19,15 +19,23 @@ echo "Installing frontend dependencies..."
 cd "$ROOT_DIR/frontend"
 npm install
 
+# Install mobile dependencies
+echo "Installing mobile dependencies..."
+cd "$ROOT_DIR/mobile"
+npm install
+
 # Install backend dependencies
 echo "Installing backend dependencies..."
 cd "$ROOT_DIR/backend"
 uv sync
 
-# Start both servers
+# Start all servers
 echo ""
-echo "Starting backend (http://localhost:8000) and frontend (http://localhost:3000)..."
-echo "Press Ctrl+C to stop both."
+echo "Starting services:"
+echo "  - Backend: http://localhost:8000"
+echo "  - Frontend: http://localhost:3000"
+echo "  - Mobile: Expo dev server"
+echo "Press Ctrl+C to stop all services."
 echo ""
 
 cd "$ROOT_DIR/backend"
@@ -38,7 +46,11 @@ cd "$ROOT_DIR/frontend"
 npm run dev &
 FRONTEND_PID=$!
 
-# Kill both on exit
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT
+cd "$ROOT_DIR/mobile"
+npx expo start &
+MOBILE_PID=$!
+
+# Kill all on exit
+trap "kill $BACKEND_PID $FRONTEND_PID $MOBILE_PID 2>/dev/null" EXIT
 
 wait
