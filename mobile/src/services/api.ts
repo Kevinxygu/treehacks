@@ -1,12 +1,12 @@
 import { API_URL, FASTAPI_URL } from "@env";
 
 // ------------------------------------------------------------------
-// API Configuration
-// Loaded from .env file for local development
+// API Configuration (from .env). For physical device testing, set
+// API_URL to your machine's local IP (e.g. http://10.x.x.x:3001).
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
     ? API_URL
-    : "https://your-production-api.com"; // production
+    : "https://your-production-api.com";
 
 const FASTAPI_BASE = __DEV__
     ? FASTAPI_URL

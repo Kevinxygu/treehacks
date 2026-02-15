@@ -15,45 +15,45 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "Conversation">;
 // ---------- Types ----------
 
 interface Message {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  timestamp: string;
+    id: string;
+    role: "user" | "assistant";
+    text: string;
+    timestamp: string;
 }
 
 // ---------- Typing dots ----------
 
 function TypingDots() {
-  const dots = [useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current];
+    const dots = [useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current, useRef(new Animated.Value(0.3)).current];
 
-  useEffect(() => {
-    const anims = dots.map((dot, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 200),
-          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
-        ]),
-      ),
+    useEffect(() => {
+        const anims = dots.map((dot, i) =>
+            Animated.loop(
+                Animated.sequence([
+                    Animated.delay(i * 200),
+                    Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
+                ]),
+            ),
+        );
+        anims.forEach((a) => a.start());
+        return () => anims.forEach((a) => a.stop());
+    }, []);
+
+    return (
+        <View style={styles.typingRow}>
+            {dots.map((opacity, i) => (
+                <Animated.View key={i} style={[styles.typingDot, { opacity }]} />
+            ))}
+        </View>
     );
-    anims.forEach((a) => a.start());
-    return () => anims.forEach((a) => a.stop());
-  }, []);
-
-  return (
-    <View style={styles.typingRow}>
-      {dots.map((opacity, i) => (
-        <Animated.View key={i} style={[styles.typingDot, { opacity }]} />
-      ))}
-    </View>
-  );
 }
 
 // ---------- Conversation Screen ----------
 
 export default function ConversationScreen() {
-  const navigation = useNavigation<Nav>();
-  const flatListRef = useRef<FlatList>(null);
+    const navigation = useNavigation<Nav>();
+    const flatListRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -216,6 +216,13 @@ export default function ConversationScreen() {
       setIsProcessing(false);
     }
   }, [recording, chatHistory, playAudioBase64]);
+      }
+    } catch (err) {
+      console.error("Failed to stop recording", err);
+      setRecording(null);
+      setIsProcessing(false);
+    }
+  }, [recording, chatHistory, playAudioBase64]);
 
   const toggleRecording = useCallback(() => {
     if (isProcessing) return; // Don't allow recording while processing
@@ -354,37 +361,37 @@ export default function ConversationScreen() {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
+    container: { flex: 1 },
+    safe: { flex: 1 },
 
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: Colors.glassWhiteSubtle,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backArrow: { fontSize: 24, color: Colors.gray600 },
-  headerPill: {
-    backgroundColor: Colors.glassWhiteSubtle,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "600", color: Colors.gray700 },
+    // Header
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    backButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        backgroundColor: Colors.glassWhiteSubtle,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    backArrow: { fontSize: 24, color: Colors.gray600 },
+    headerPill: {
+        backgroundColor: Colors.glassWhiteSubtle,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+    },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: Colors.gray700 },
 
   // Empty state
   emptyState: {
