@@ -19,51 +19,68 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const features = [
+const problemCards = [
   {
-    icon: Mic,
-    title: "Voice-Activated Assistant",
+    icon: Users,
+    title: "Tech Has Left Seniors Behind",
     description:
-      "Natural voice conversations that feel like talking to a caring friend. No complicated interfaces — just speak.",
-    color: "#4A90E2",
-  },
-  {
-    icon: Brain,
-    title: "Cognitive Decline Detection",
-    description:
-      "Passive analysis of voice biomarkers detects early signs of cognitive decline through speech patterns and memory markers.",
-    color: "#9B51E0",
-  },
-  {
-    icon: Activity,
-    title: "WHOOP Integration",
-    description:
-      "Combines voice analysis with wearable health data for holistic monitoring of sleep, activity, and recovery.",
-    color: "#7ED321",
+      "Ever helped your grandparents with an iPad? What happens when they need to manage medicine or health records on vacation? Modern technology has become too complex for those who need it most.",
+    color: "#E8B298",
+    image: "/images/issue-1-graphic.png",
   },
   {
     icon: Heart,
-    title: "Reminiscence Therapy",
-    description:
-      "Personalized photo and memory-based conversations that strengthen neural pathways and prevent loneliness.",
-    color: "#F5A623",
+    title: "Loneliness Fuels Dementia",
+    description: "Loneliness increases dementia risk by 50%. Limited social interactions contribute to cognitive decline, which is painful for patients, families, and caregivers alike.",
+    color: "#8B9DC0",
+    image: "/images/issue-2-graphic.png",
   },
   {
-    icon: Shield,
-    title: "Doctor-Prescribed Interventions",
+    icon: Activity,
+    title: "Aging Population Crisis",
     description:
-      "Evidence-based intervention plans designed by healthcare professionals to slow or reverse cognitive decline.",
-    color: "#D0021B",
+      "By 2030, one in six people worldwide will be over 65 and this will double by 2050. Healthcare systems urgently need innovative solutions to support this demographic shift.",
+    color: "#9DC08B",
+    image: "/images/issue-3-graphic.png",
+  },
+];
+
+const solutionFeatures = [
+  {
+    icon: Mic,
+    title: "Voice-First Task Management",
+    description:
+      "Handle tasks naturally: 'Help me view my vaccine history' or 'Order my medicine refill.' No apps to learn, no buttons to press — just conversation.",
+    color: "#5B9A8B",
+    image: "/images/solution-1-graphic.png",
+  },
+  {
+    icon: Brain,
+    title: "Passive Biomarker Detection",
+    description:
+      "AI analyzes speech for early warning signs: reduced vocabulary range, word-finding pauses (like forgetting 'refrigerator'), and changes in speech patterns.",
+    color: "#7EC8B8",
+    image: "/images/solution-2-graphic.png",
+  },
+  {
+    icon: Stethoscope,
+    title: "Clinical AI Analysis",
+    description:
+      "Our AI agent interprets symptoms using clinical data from OpenEvidence. 'Help me check in on my health' provides deep, personalized health insights.",
+    color: "#5B9A8B",
+    image: "/images/solution-3-graphic.png",
   },
   {
     icon: BarChart3,
-    title: "Caretaker Dashboard",
+    title: "Empowering Healthcare Providers",
     description:
-      "Real-time monitoring dashboard for family members and healthcare providers with exportable reports.",
-    color: "#2D5BFF",
+      "Real-time dashboards and exportable reports give doctors and families the resources they need to support the growing elderly population.",
+    color: "#8B9DC0",
+    image: "/images/solution-4-graphic.png",
   },
 ];
 
@@ -76,28 +93,28 @@ const stats = [
 
 const researchPoints = [
   {
-    title: "Voice Biomarkers for Early Detection",
-    source: "Journal of Alzheimer's Disease, 2024",
+    title: "Redefining Elderly Care with Agentic AI",
+    source: "Khalil, Adhmad, & Ali, 2025",
     finding:
-      "Speech pattern analysis can detect cognitive decline up to 5 years before clinical diagnosis through markers like word-finding pauses, vocabulary diversity, and sentence complexity.",
+      "Agentic AI provides critical solutions to the global aging crisis by enabling personalized companionship, health monitoring, and predictive care, directly addressing workforce shortages and reducing social isolation.",
   },
   {
-    title: "Social Isolation Accelerates Decline",
+    title: "Loneliness as a Dementia Risk Factor",
     source: "The Lancet Commission, 2024",
     finding:
-      "Social isolation is identified as one of 14 modifiable risk factors for dementia. Regular social interaction — even with AI companions — shows measurable cognitive benefits.",
+      "Social isolation increases dementia risk by 50% and is one of 14 modifiable risk factors. Regular social interaction — even with AI companions — shows measurable cognitive benefits.",
   },
   {
-    title: "Multimodal Health Monitoring",
-    source: "Nature Digital Medicine, 2024",
+    title: "Voice Biomarkers Detect Decline Early",
+    source: "Journal of Alzheimer's Disease, 2024",
     finding:
-      "Combining wearable sensor data (sleep, HRV, activity) with cognitive assessments improves prediction accuracy of MCI progression by 40% over single-modality approaches.",
+      "Speech analysis detects cognitive decline 3-5 years before clinical diagnosis through markers like word-finding pauses, reduced vocabulary diversity, and sentence complexity changes.",
   },
   {
-    title: "Reminiscence Therapy Efficacy",
-    source: "Cochrane Systematic Review, 2023",
+    title: "Global Aging Population Surge",
+    source: "United Nations Population Report, 2024",
     finding:
-      "Structured reminiscence therapy shows significant improvements in mood, cognitive function, and quality of life for individuals with mild to moderate cognitive impairment.",
+      "By 2030, one in six people worldwide will be over 65, with this number doubling by 2050. Healthcare systems face urgent pressure to develop innovative elderly care solutions.",
   },
 ];
 
@@ -110,33 +127,28 @@ const fadeUp = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FAFCFB]">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#E5EBE8]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-care-blue to-care-purple flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5B9A8B] to-[#7EC8B8] flex items-center justify-center shadow-sm">
+              <Activity className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-semibold text-lg">CareCompanion</span>
+            <span className="font-semibold text-lg text-[#2D3B36]">CareCompanion</span>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          <div className="hidden md:flex items-center gap-10">
+            <a href="#features" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
               Features
             </a>
-            <a href="#research" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="#research" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
               Research
             </a>
-            <a href="#team" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <a href="#team" className="text-sm text-[#6B7C74] hover:text-[#2D3B36] transition-colors font-medium">
               Team
             </a>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/companion">
-              <Button variant="ghost" className="text-sm">
-                Try Companion
-              </Button>
-            </Link>
             <Link href="/dashboard">
               <Button className="bg-care-blue hover:bg-care-blue/90 text-white text-sm">
                 Dashboard
@@ -147,105 +159,146 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-care-gradient pointer-events-none" />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-care-blue/8 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-care-purple/6 blur-3xl" />
-        </div>
+      <section className="relative overflow-hidden bg-white min-h-[100vh] flex items-center">
+        <div className="relative max-w-7xl mx-auto px-12 md:px-16 lg:px-24 py-20">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#2D3B36] leading-[1.1] mb-5 tracking-tight">
+                Senior care that{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B9A8B] to-[#7EC8B8]">
+                  listens
+                </span>
+              </h1>
 
-        <div className="relative max-w-6xl mx-auto px-6 pt-24 pb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-care-blue/10 text-care-blue text-sm font-medium mb-8">
-              <Sparkles className="w-4 h-4" />
-              Built at TreeHacks 2026
-            </div>
+              <p className="text-base md:text-lg text-[#6B7C74] leading-relaxed mb-10">
+                While apps got more complicated, seniors got left behind. We're fixing that with a voice-based AI caretaker that completes your chores and prevents cognitive decline.
+              </p>
 
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
-              Care that{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-care-blue to-care-purple">
-                listens
-              </span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-gray-500 leading-relaxed mb-10 max-w-2xl mx-auto">
-              An AI voice companion that detects cognitive decline early,
-              provides meaningful companionship, and keeps families connected.
-            </p>
-
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Link href="/companion">
-                <Button
-                  size="lg"
-                  className="bg-care-blue hover:bg-care-blue/90 text-white text-lg px-8 h-14 rounded-xl gap-2"
-                >
-                  <Mic className="w-5 h-5" />
-                  Try the companion
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-8 h-14 rounded-xl gap-2"
-                >
-                  View dashboard
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6"
-          >
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center glass rounded-2xl p-6">
-                <p className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
+              <div className="flex items-center gap-4 flex-wrap">
+                <Link href="/dashboard">
+                  <Button
+                    size="lg"
+                    className="bg-[#5B9A8B] hover:bg-[#4A8577] text-white text-base px-8 h-14 rounded-2xl gap-2 shadow-lg shadow-[#5B9A8B]/20"
+                  >
+                    View dashboard
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
               </div>
-            ))}
-          </motion.div>
+            </motion.div>
+
+            {/* Right: Hero Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative flex justify-center"
+            >
+              <Image
+                src="/images/treehacks-hero-photo.png"
+                alt="Two people hugging, representing care and companionship"
+                width={500}
+                height={500}
+                priority
+                className="w-full max-w-[500px] ml-16 h-auto"
+              />
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Everything your loved one needs
+      {/* The Problem */}
+      <section id="problem" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
+              The Problem
             </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              A comprehensive platform combining voice AI, wearable data, and
-              clinical research to support aging with dignity.
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
+              Technology has advanced rapidly, but it's left our most vulnerable population behind.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
+          <div className="space-y-24">
+            {problemCards.map((problem, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`flex flex-col ${i % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 md:gap-24`}
               >
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all bg-white group h-full">
-                  <CardContent className="p-6">
+                {/* Text Side */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center mb-6">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: `${problem.color}15` }}
+                    >
+                      <problem.icon
+                        className="w-6 h-6"
+                        style={{ color: problem.color }}
+                      />
+                    </div>
+                  </div>
+
+                  <h3 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-6 leading-tight">
+                    {problem.title}
+                  </h3>
+                  <p className="text-lg text-[#6B7C74] leading-relaxed">
+                    {problem.description}
+                  </p>
+                </div>
+
+                {/* Image Side */}
+                <div className="flex-1 w-full flex justify-center items-center">
+                  <Image
+                    src={problem.image}
+                    alt={problem.title}
+                    width={600}
+                    height={400}
+                    className="w-full max-w-[500px] h-auto"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Solution */}
+      <section id="solution" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-24">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
+              Our Solution
+            </h2>
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
+              A conversational AI caretaker that's as easy as talking to a friend.
+            </p>
+          </motion.div>
+
+          <div className="space-y-32">
+            {solutionFeatures.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-24`}
+              >
+                {/* Text Side */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center mb-6">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
                       style={{ backgroundColor: `${feature.color}15` }}
                     >
                       <feature.icon
@@ -253,11 +306,66 @@ export default function LandingPage() {
                         style={{ color: feature.color }}
                       />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {feature.title}
+                  </div>
+
+                  <h3 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-6 leading-tight">
+                    {feature.title}
+                  </h3>
+                  <p className="text-lg text-[#6B7C74] leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+
+                {/* Image Side */}
+                <div className="flex-1 w-full flex justify-center items-center">
+                  <Image
+                    src={feature.image || ""}
+                    alt={feature.title}
+                    width={600}
+                    height={400}
+                    className="w-full max-w-[500px] h-auto"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Research */}
+      <section id="research" className="py-28 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
+              Why This Matters
+            </h2>
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
+              The science behind our approach and the urgency of the problem.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {researchPoints.map((point, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <Card className="border border-[#E5EBE8] shadow-sm bg-[#FAFCFB] h-full">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FileText className="w-4 h-4 text-[#5B9A8B]" />
+                      <span className="text-xs font-medium text-[#5B9A8B]">
+                        {point.source}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-semibold text-[#2D3B36] mb-2">
+                      {point.title}
                     </h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      {feature.description}
+                    <p className="text-sm text-[#6B7C74] leading-relaxed">
+                      {point.finding}
                     </p>
                   </CardContent>
                 </Card>
@@ -268,15 +376,15 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 bg-care-gradient">
+      <section className="py-28 bg-[#F8FAF9]">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
               How it works
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 step: "1",
@@ -308,17 +416,17 @@ export default function LandingPage() {
                 transition={{ duration: 0.5, delay: i * 0.15 }}
                 className="text-center"
               >
-                <div className="glass-strong rounded-3xl p-8 h-full">
-                  <div className="w-14 h-14 rounded-2xl bg-care-blue/10 flex items-center justify-center mx-auto mb-5">
-                    <item.icon className="w-7 h-7 text-care-blue" />
+                <div className="bg-white rounded-2xl p-8 h-full border border-[#E5EBE8] shadow-sm">
+                  <div className="w-12 h-12 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center mx-auto mb-5">
+                    <item.icon className="w-6 h-6 text-[#5B9A8B]" />
                   </div>
-                  <div className="text-sm font-bold text-care-blue mb-2">
+                  <div className="text-xs font-semibold text-[#5B9A8B] mb-2 uppercase tracking-wide">
                     Step {item.step}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  <h3 className="text-lg font-semibold text-[#2D3B36] mb-3">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-sm text-[#6B7C74] leading-relaxed">
                     {item.description}
                   </p>
                 </div>
@@ -328,64 +436,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Research */}
-      <section id="research" className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Built on research
-            </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Our approach is grounded in peer-reviewed clinical research and
-              the latest advances in digital health.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {researchPoints.map((point, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <Card className="border-0 shadow-sm bg-gray-50/80 h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FileText className="w-4 h-4 text-care-blue" />
-                      <span className="text-xs font-medium text-care-blue">
-                        {point.source}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {point.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      {point.finding}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
+      {/* Stats */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-12 md:px-16 lg:px-24">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+          >
+            {stats.map((stat, i) => (
+              <div key={i} className="text-center bg-white rounded-2xl p-6 border border-[#E5EBE8] shadow-sm">
+                <p className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-[#6B7C74]">{stat.label}</p>
+              </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Two interfaces section */}
-      <section className="py-24 bg-care-gradient">
+      <section className="py-28 bg-[#F8FAF9]">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
               Two interfaces, one mission
             </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
               Designed for the people who matter most — your loved ones and
               their caregivers.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Elderly interface */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -393,16 +478,16 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="glass-strong rounded-3xl p-8 h-full">
+              <div className="bg-white rounded-2xl p-8 h-full border border-[#E5EBE8] shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-care-blue/10 flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-care-blue" />
+                  <div className="w-11 h-11 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-[#5B9A8B]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-[#2D3B36]">
                       For Your Loved One
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[#6B7C74]">
                       Voice-first, calming, accessible
                     </p>
                   </div>
@@ -417,19 +502,16 @@ export default function LandingPage() {
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-3 text-sm text-gray-600"
+                      className="flex items-center gap-3 text-sm text-[#3D4F47]"
                     >
-                      <ChevronRight className="w-4 h-4 text-care-blue flex-shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-[#5B9A8B] flex-shrink-0" />
                       {item}
                     </li>
                   ))}
                 </ul>
-                <Link href="/companion">
-                  <Button className="bg-care-blue hover:bg-care-blue/90 text-white gap-2 w-full h-12 rounded-xl">
-                    <Mic className="w-4 h-4" />
-                    Try companion mode
-                  </Button>
-                </Link>
+                <p className="text-sm text-gray-500 italic">
+                  Download our mobile app to use companion mode
+                </p>
               </div>
             </motion.div>
 
@@ -440,16 +522,16 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="glass-strong rounded-3xl p-8 h-full">
+              <div className="bg-white rounded-2xl p-8 h-full border border-[#E5EBE8] shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-care-purple/10 flex items-center justify-center">
-                    <BarChart3 className="w-6 h-6 text-care-purple" />
+                  <div className="w-11 h-11 rounded-xl bg-[#7EC8B8]/15 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-[#5B9A8B]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-[#2D3B36]">
                       For Caretakers
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[#6B7C74]">
                       Data-rich, professional, actionable
                     </p>
                   </div>
@@ -464,9 +546,9 @@ export default function LandingPage() {
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-3 text-sm text-gray-600"
+                      className="flex items-center gap-3 text-sm text-[#3D4F47]"
                     >
-                      <ChevronRight className="w-4 h-4 text-care-purple flex-shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-[#7EC8B8] flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -474,7 +556,7 @@ export default function LandingPage() {
                 <Link href="/dashboard">
                   <Button
                     variant="outline"
-                    className="gap-2 w-full h-12 rounded-xl border-care-purple/30 text-care-purple hover:bg-care-purple/5"
+                    className="gap-2 w-full h-12 rounded-xl border-[#E5EBE8] text-[#5B9A8B] hover:bg-[#E8F3F1] hover:border-[#D5DDD9]"
                   >
                     <BarChart3 className="w-4 h-4" />
                     View dashboard
@@ -487,13 +569,13 @@ export default function LandingPage() {
       </section>
 
       {/* Team */}
-      <section id="team" className="py-24 bg-white">
+      <section id="team" className="py-28 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
               Built with care
             </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
               Our team at TreeHacks 2026 is passionate about using technology
               to improve the lives of aging adults and their families.
             </p>
@@ -514,13 +596,13 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-care-blue/20 to-care-purple/20 flex items-center justify-center mx-auto mb-3">
-                  <Users className="w-8 h-8 text-care-blue/60" />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#5B9A8B]/15 to-[#7EC8B8]/15 flex items-center justify-center mx-auto mb-3">
+                  <Users className="w-8 h-8 text-[#5B9A8B]/70" />
                 </div>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-[#2D3B36]">
                   {member.name}
                 </p>
-                <p className="text-xs text-gray-500">{member.role}</p>
+                <p className="text-xs text-[#6B7C74]">{member.role}</p>
               </motion.div>
             ))}
           </div>
@@ -528,7 +610,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-care-blue to-care-purple">
+      <section className="py-24 bg-gradient-to-br from-[#5B9A8B] via-[#6BA99A] to-[#7EC8B8]">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -536,30 +618,20 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
               Technology that doesn&apos;t feel like technology
             </h2>
-            <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
               Start a conversation. Detect early. Intervene sooner. Keep your
               loved ones connected and cared for.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Link href="/companion">
-                <Button
-                  size="lg"
-                  className="bg-white text-care-blue hover:bg-white/90 text-lg px-8 h-14 rounded-xl gap-2"
-                >
-                  <Mic className="w-5 h-5" />
-                  Get started
-                </Button>
-              </Link>
               <Link href="/dashboard">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="text-white border-white/30 hover:bg-white/10 text-lg px-8 h-14 rounded-xl gap-2"
+                  className="bg-care-blue hover:bg-care-blue/90 text-white text-lg px-8 h-14 rounded-xl gap-2"
                 >
-                  Explore dashboard
+                  View dashboard
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -569,17 +641,17 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-gray-50 border-t border-gray-100">
+      <footer className="py-8 bg-[#FAFCFB] border-t border-[#E5EBE8]">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-care-blue to-care-purple flex items-center justify-center">
-              <Activity className="w-3 h-3 text-white" />
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#5B9A8B] to-[#7EC8B8] flex items-center justify-center">
+              <Activity className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-sm font-medium text-gray-500">
+            <span className="text-sm font-medium text-[#6B7C74]">
               CareCompanion
             </span>
           </div>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[#9CA8A2]">
             Built with care at TreeHacks 2026
           </p>
         </div>

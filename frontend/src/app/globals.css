@@ -46,52 +46,62 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* CareCompanion custom colors */
-  --color-care-blue: #4A90E2;
-  --color-care-green: #7ED321;
-  --color-care-orange: #F5A623;
-  --color-care-red: #D0021B;
-  --color-care-light: #F0F7FF;
-  --color-care-purple: #9B51E0;
-  --color-dash-blue: #2D5BFF;
-  --color-alert-red: #FF3B30;
-  --color-alert-yellow: #FFCC00;
-  --color-alert-green: #34C759;
+  /* CareCompanion - Health & Wellness Color Palette */
+  --color-care-primary: #5B9A8B;      /* Soft sage green - primary */
+  --color-care-secondary: #7EC8B8;    /* Light teal - secondary */
+  --color-care-accent: #8FBEAB;       /* Muted mint */
+  --color-care-warm: #F5E6D3;         /* Warm cream */
+  --color-care-light: #F8FAF9;        /* Off-white with green tint */
+  --color-care-sage: #9DC08B;         /* Gentle sage */
+  --color-care-mist: #E8F3F1;         /* Soft mist */
+  
+  /* Legacy aliases for compatibility */
+  --color-care-blue: #5B9A8B;
+  --color-care-green: #7EC8B8;
+  --color-care-orange: #E8B298;
+  --color-care-red: #D97B7B;
+  --color-care-purple: #8B9DC0;
+  --color-dash-blue: #5B9A8B;
+  
+  /* Status colors - softer variants */
+  --color-alert-red: #D97B7B;
+  --color-alert-yellow: #E8C87B;
+  --color-alert-green: #7EC8B8;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #4A90E2;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: #D0021B;
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #4A90E2;
-  --chart-1: #4A90E2;
-  --chart-2: #7ED321;
-  --chart-3: #9B51E0;
-  --chart-4: #F5A623;
-  --chart-5: #D0021B;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #4A90E2;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --background: #FAFCFB;
+  --foreground: #2D3B36;
+  --card: #FFFFFF;
+  --card-foreground: #2D3B36;
+  --popover: #FFFFFF;
+  --popover-foreground: #2D3B36;
+  --primary: #5B9A8B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0F5F3;
+  --secondary-foreground: #3D4F47;
+  --muted: #F5F7F6;
+  --muted-foreground: #6B7C74;
+  --accent: #E8F3F1;
+  --accent-foreground: #3D4F47;
+  --destructive: #D97B7B;
+  --border: #E5EBE8;
+  --input: #E5EBE8;
+  --ring: #5B9A8B;
+  --chart-1: #5B9A8B;
+  --chart-2: #7EC8B8;
+  --chart-3: #9DC08B;
+  --chart-4: #E8B298;
+  --chart-5: #8B9DC0;
+  --sidebar: #F8FAF9;
+  --sidebar-foreground: #2D3B36;
+  --sidebar-primary: #5B9A8B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E8F3F1;
+  --sidebar-accent-foreground: #3D4F47;
+  --sidebar-border: #E5EBE8;
+  --sidebar-ring: #5B9A8B;
 }
 
 @layer base {
@@ -186,13 +196,17 @@
   animation: float 4s ease-in-out infinite;
 }
 
-/* Gradient backgrounds */
+/* Gradient backgrounds - Calming wellness theme */
 .bg-care-gradient {
-  background: linear-gradient(135deg, #F0F7FF 0%, #E8F4FD 30%, #F5F0FF 60%, #F0F7FF 100%);
+  background: linear-gradient(135deg, #F8FAF9 0%, #E8F3F1 35%, #F0F5F3 65%, #FAFCFB 100%);
 }
 
 .bg-care-gradient-warm {
-  background: linear-gradient(135deg, #F0F7FF 0%, #FFF8F0 50%, #F0FFF4 100%);
+  background: linear-gradient(135deg, #FAFCFB 0%, #F5EDE4 50%, #E8F3F1 100%);
+}
+
+.bg-care-gradient-soft {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAF9 100%);
 }
 
 /* Smooth scrollbar */
