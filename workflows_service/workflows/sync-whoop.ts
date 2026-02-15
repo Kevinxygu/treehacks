@@ -24,7 +24,49 @@ export async function syncElderHealthData(elderId: string) {
   await updateLastSyncTimestamp(elderId, now);
   console.log("[syncElderHealthData] updateLastSyncTimestamp now=", now);
 
-  const result = { elderId, sleepCount: sleep.length, cycleCount: cycle.length, recoveryCount: recovery.length };
+  const latestSleep = sleep.length ? sleep[sleep.length - 1] : null;
+  const latestRecovery = recovery.length ? recovery[recovery.length - 1] : null;
+  const latestCycle = cycle.length ? cycle[cycle.length - 1] : null;
+  const sleepScore = latestSleep?.score?.sleep_performance_percentage ?? null;
+  const inBedMs = latestSleep?.score?.stage_summary?.total_in_bed_time_milli;
+  const hoursInBed = inBedMs != null ? inBedMs / (1000 * 60 * 60) : undefined;
+  const sn = latestSleep?.score?.sleep_needed;
+  const needMs =
+    sn != null
+      ? (sn.baseline_milli ?? 0) +
+        (sn.need_from_sleep_debt_milli ?? 0) +
+        (sn.need_from_recent_strain_milli ?? 0) +
+        (sn.need_from_recent_nap_milli ?? 0)
+      : 0;
+  const hoursNeeded = needMs > 0 ? needMs / (1000 * 60 * 60) : undefined;
+  const sleepNeedScore =
+    hoursInBed != null && hoursNeeded != null && hoursNeeded > 0
+      ? Math.round((hoursInBed / hoursNeeded) * 100)
+      : null;
+  const recoveryScore = latestRecovery?.score?.recovery_score ?? null;
+  const strain = latestCycle?.score?.strain ?? null;
+  const strainPercent = strain != null ? Math.round((Number(strain) / 21) * 100) : null;
+
+  const result = {
+    elderId,
+    sleepCount: sleep.length,
+    cycleCount: cycle.length,
+    recoveryCount: recovery.length,
+    scores: {
+      sleep: sleepScore,
+      sleepNeedScore,
+      sleepConsistency: latestSleep?.score?.sleep_consistency_percentage ?? null,
+      sleepEfficiency: latestSleep?.score?.sleep_efficiency_percentage ?? null,
+      recovery: recoveryScore,
+      recoveryRestingHeartRate: latestRecovery?.score?.resting_heart_rate ?? null,
+      recoveryHrvRmssdMilli: latestRecovery?.score?.hrv_rmssd_milli ?? null,
+      recoverySpo2Percentage: latestRecovery?.score?.spo2_percentage ?? null,
+      strainPercent,
+      strainKilojoule: latestCycle?.score?.kilojoule ?? null,
+      strainAverageHeartRate: latestCycle?.score?.average_heart_rate ?? null,
+      strainMaxHeartRate: latestCycle?.score?.max_heart_rate ?? null,
+    },
+  };
   console.log("[syncElderHealthData] result", result);
   return result;
 }
@@ -107,31 +149,71 @@ async function fetchWhoopRecovery(elderId: string, _since: string | null): Promi
 }
 
 interface SleepRecord {
-  date: string;
-  performance_percent?: number;
-  consistency_percent?: number;
-  hours_in_bed: number;
+  id?: string;
+  cycle_id?: number;
+  v1_id?: number;
+  user_id?: number;
+  created_at?: string;
+  updated_at?: string;
+  start: string;
+  end: string;
+  timezone_offset?: string;
+  nap?: boolean;
+  score_state?: string;
+  score?: {
+    stage_summary?: {
+      total_in_bed_time_milli?: number;
+      total_awake_time_milli?: number;
+      total_no_data_time_milli?: number;
+      total_light_sleep_time_milli?: number;
+      total_slow_wave_sleep_time_milli?: number;
+      total_rem_sleep_time_milli?: number;
+      sleep_cycle_count?: number;
+      disturbance_count?: number;
+    };
+    sleep_needed?: {
+      baseline_milli?: number;
+      need_from_sleep_debt_milli?: number;
+      need_from_recent_strain_milli?: number;
+      need_from_recent_nap_milli?: number;
+    };
+    respiratory_rate?: number;
+    sleep_performance_percentage?: number;
+    sleep_consistency_percentage?: number;
+    sleep_efficiency_percentage?: number;
+  };
 }
 
 interface CycleRecord {
   id?: number;
-  date: string;
-  strain?: number;
-  kilojoule?: number;
-  average_heart_rate?: number;
-  max_heart_rate?: number;
+  user_id?: number;
+  created_at?: string;
+  updated_at?: string;
+  start: string;
+  end: string;
+  timezone_offset?: string;
   score_state?: string;
+  score?: {
+    strain?: number;
+    kilojoule?: number;
+    average_heart_rate?: number;
+    max_heart_rate?: number;
+  };
 }
 
 interface RecoveryRecord {
   cycle_id?: number;
   sleep_id?: string;
-  created_at: string;
+  user_id?: number;
+  created_at?: string;
+  updated_at?: string;
   score_state?: string;
-  recovery_score?: number;
-  resting_heart_rate?: number;
-  hrv_rmssd_milli?: number;
-  spo2_percentage?: number;
-  skin_temp_celsius?: number;
-  user_calibrating?: boolean;
+  score?: {
+    user_calibrating?: boolean;
+    recovery_score?: number;
+    resting_heart_rate?: number;
+    hrv_rmssd_milli?: number;
+    spo2_percentage?: number;
+    skin_temp_celsius?: number;
+  };
 }

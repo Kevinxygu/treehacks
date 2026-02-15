@@ -20,10 +20,12 @@ app = FastAPI()
 # Add CORS middleware
 origins = [
     "http://localhost",
-    "http://localhost:3000", # Assuming your frontend runs on port 3000
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:52766", # Based on the log output
-    "http://127.0.0.1:52766", # Based on the log output
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://localhost:52766",
+    "http://127.0.0.1:52766",
 ]
 
 app.add_middleware(
