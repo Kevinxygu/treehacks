@@ -10,8 +10,10 @@ app.post("/api/sync-health", async (req, res) => {
   if (!elderId || typeof elderId !== "string") {
     return res.status(400).json({ error: "elderId required" });
   }
-  await start(syncElderHealthData, [elderId]);
-  return res.json({ message: "Sync health workflow started", elderId });
+  const run = await start(syncElderHealthData, [elderId]);
+  const result = { message: "Sync health workflow started", elderId, run };
+  console.log("[sync-health] started", result);
+  return res.json(result);
 });
 
 export default app;

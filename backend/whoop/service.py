@@ -20,15 +20,32 @@ SCOPES = "read:sleep read:cycles read:recovery offline"
 
 CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]
 CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
-REFRESH_TOKEN = os.environ.get("WHOOP_REFRESH_TOKEN")
+WHOOP_DIR = Path(__file__).resolve().parent
+REFRESH_TOKEN_FILE = WHOOP_DIR / ".whoop_refresh_token"
+
+
+def _get_refresh_token() -> str | None:
+    token = os.environ.get("WHOOP_REFRESH_TOKEN", "").strip()
+    if token:
+        return token
+    if REFRESH_TOKEN_FILE.exists():
+        return REFRESH_TOKEN_FILE.read_text().strip() or None
+    return None
+
+
+def _set_refresh_token(token: str) -> None:
+    REFRESH_TOKEN_FILE.write_text(token)
 
 
 def refresh_access_token() -> tuple[str, str]:
+    token = _get_refresh_token()
+    if not token:
+        raise RuntimeError("No refresh token; run once with browser to authorize.")
     resp = requests.post(
         TOKEN_URL,
         data={
             "grant_type": "refresh_token",
-            "refresh_token": REFRESH_TOKEN,
+            "refresh_token": token,
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "scope": SCOPES,
@@ -37,7 +54,10 @@ def refresh_access_token() -> tuple[str, str]:
     )
     resp.raise_for_status()
     data = resp.json()
-    return data["access_token"], data.get("refresh_token") or REFRESH_TOKEN
+    new_refresh = data.get("refresh_token") or token
+    if new_refresh != token:
+        _set_refresh_token(new_refresh)
+    return data["access_token"], new_refresh
 
 
 def run_oauth_flow() -> str:
@@ -93,12 +113,13 @@ def run_oauth_flow() -> str:
     data = resp.json()
     new_refresh = data.get("refresh_token")
     if new_refresh:
-        print("Set WHOOP_REFRESH_TOKEN for next runs:", new_refresh)
+        _set_refresh_token(new_refresh)
+        print("Refresh token saved to", REFRESH_TOKEN_FILE)
     return data["access_token"]
 
 
 def get_access_token() -> str:
-    if REFRESH_TOKEN:
+    if _get_refresh_token():
         access_token, _ = refresh_access_token()
         return access_token
     return run_oauth_flow()
@@ -107,7 +128,7 @@ def get_access_token() -> str:
 def get_weekly_sleep() -> list[dict]:
     access_token = get_access_token()
     end_time = datetime.utcnow()
-    start_time = end_time - timedelta(days=7)
+    start_time = end_time - timedelta(days=DEFAULT_RANGE_DAYS)
     params = {
         "start": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "end": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -144,9 +165,12 @@ def _auth_headers() -> dict:
     }
 
 
-def _week_params() -> dict:
+DEFAULT_RANGE_DAYS = 1
+
+
+def _default_range_params() -> dict:
     end_time = datetime.utcnow()
-    start_time = end_time - timedelta(days=7)
+    start_time = end_time - timedelta(days=DEFAULT_RANGE_DAYS)
     return {
         "start": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "end": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -156,7 +180,7 @@ def _week_params() -> dict:
 
 def get_weekly_cycle() -> list[dict]:
     url = f"{API_BASE}/v2/cycle"
-    response = requests.get(url, headers=_auth_headers(), params=_week_params())
+    response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
     response.raise_for_status()
     data = response.json()
     records = []
@@ -176,7 +200,7 @@ def get_weekly_cycle() -> list[dict]:
 
 def get_weekly_recovery() -> list[dict]:
     url = f"{API_BASE}/v2/recovery"
-    response = requests.get(url, headers=_auth_headers(), params=_week_params())
+    response = requests.get(url, headers=_auth_headers(), params=_default_range_params())
     response.raise_for_status()
     data = response.json()
     records = []
