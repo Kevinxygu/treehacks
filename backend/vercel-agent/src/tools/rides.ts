@@ -114,10 +114,7 @@ function normalizeLocation(s: string): string {
 }
 
 /** Return cached ride result if same pickup/destination was looked up within the last 2 minutes. */
-async function getCachedRideLookup(
-    pickup: string,
-    destination: string,
-): Promise<{ pickup: string; destination: string; prices: string; rideOptions?: RideOption[] } | null> {
+async function getCachedRideLookup(pickup: string, destination: string): Promise<{ pickup: string; destination: string; prices: string; rideOptions?: RideOption[] } | null> {
     try {
         const db = await getDb();
         const pickupNorm = normalizeLocation(pickup);
