@@ -60,6 +60,11 @@ def refresh_access_token() -> tuple[str, str]:
     new_refresh = data.get("refresh_token") or token
     if new_refresh != token:
         _set_refresh_token(new_refresh)
+    
+    # print(data["access_token"])
+    # print("^^ ACCESS TOKEN")
+    # print(new_refresh)
+    # print("^^ NEW REFRESH")
     return data["access_token"], new_refresh
 
 

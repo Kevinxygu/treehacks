@@ -1,13 +1,16 @@
+import { API_URL, FASTAPI_URL } from "@env";
+
 // ------------------------------------------------------------------
-// IMPORTANT: Change this to your machine's local IP when testing on
-// a physical device.  "localhost" only works in the iOS simulator.
-//
-//   macOS:  ifconfig | grep "inet " | grep -v 127.0.0.1
-//   The Express backend runs on port 3001.
+// API Configuration
+// Loaded from .env file for local development
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
-    ? "http://10.19.176.35:3001" // your Mac's IP on local network
+    ? API_URL
     : "https://your-production-api.com"; // production
+
+const FASTAPI_BASE = __DEV__
+    ? FASTAPI_URL
+    : "https://your-production-api.com";
 
 // ---------- Types ----------
 
@@ -82,4 +85,41 @@ export async function ping(): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+// ---------- Analysis API (FastAPI backend) ----------
+
+export interface AnalysisResult {
+    ai_summary: string;
+    risk_score: number;
+    rule_based_summary: string;
+    session_id: string;
+    session_date: string;
+    rule_based: Record<string, unknown>;
+}
+
+/**
+ * Send a transcript to the FastAPI backend for cognitive analysis.
+ */
+export async function analyzeTranscript(
+    transcript: string,
+    sessionId: string = "",
+    sessionDate: string = "",
+): Promise<AnalysisResult> {
+    const res = await fetch(`${FASTAPI_BASE}/analyze-transcript-ai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            transcript,
+            session_id: sessionId,
+            session_date: sessionDate,
+        }),
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Analysis failed: ${res.status} - ${text}`);
+    }
+
+    return res.json();
 }

@@ -8,30 +8,24 @@ from companionship.controller import router as companionship_router
 from whoop.controller import router as whoop_router
 from fastapi.middleware.cors import CORSMiddleware # Import CORSMiddleware
 import os
+from datetime import datetime
 from dotenv import load_dotenv  # <--- Add this
 # Load the .env file immediately
-load_dotenv() 
+load_dotenv()
 
 # Now you can verify it loaded (optional)
 if not os.getenv("ANTHROPIC_API_KEY"):
     print("WARNING: ANTHROPIC_API_KEY not found in environment!")
 app = FastAPI()
 
-# Add CORS middleware
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:52766",
-    "http://127.0.0.1:52766",
-]
+# In-memory session store
+_sessions: list[dict] = []
 
+# Add CORS middleware — allow all origins in dev for mobile + dashboard access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -132,7 +126,32 @@ async def analyze_single_transcript_ai(req: TranscriptRequest):
     """Analyze a transcript with rule-based scoring + Claude AI summary and interventions."""
     rule_based = analyze_transcript(req.transcript, req.session_id, req.session_date)
     ai_result = generate_summary(rule_based)
-    return {**ai_result, "rule_based": rule_based}
+    result = {**ai_result, "rule_based": rule_based}
+
+    # Auto-save to in-memory session store
+    _sessions.append({
+        "transcript": req.transcript,
+        "analysis_result": result,
+        "session_id": req.session_id,
+        "session_date": req.session_date,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    return result
+
+
+@app.get("/sessions")
+async def get_all_sessions():
+    """Return all stored session results."""
+    return _sessions
+
+
+@app.get("/sessions/latest")
+async def get_latest_session():
+    """Return the most recent session result."""
+    if not _sessions:
+        return {"error": "No sessions found"}
+    return _sessions[-1]
 
 
 @app.post("/analyze-sessions")

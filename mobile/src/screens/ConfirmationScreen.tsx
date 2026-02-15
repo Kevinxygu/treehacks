@@ -23,6 +23,8 @@ export default function ConfirmationScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const summary = route.params?.summary ?? "Your session is complete.";
+  const riskScore = route.params?.riskScore;
+  const analysisSummary = route.params?.analysisSummary;
 
   // Entrance animations
   const iconScale = useRef(new Animated.Value(0)).current;
@@ -103,9 +105,11 @@ export default function ConfirmationScreen() {
                 <Text style={styles.cardEmoji}>🧠</Text>
               </View>
               <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Analysis</Text>
+                <Text style={styles.cardLabel}>
+                  {riskScore !== undefined ? `Risk Score: ${riskScore}/100` : "Analysis"}
+                </Text>
                 <Text style={styles.cardValue}>
-                  Your conversation has been sent for cognitive analysis
+                  {analysisSummary || "Your conversation has been sent for cognitive analysis"}
                 </Text>
               </View>
             </View>

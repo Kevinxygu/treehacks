@@ -21,6 +21,8 @@ import {
   Battery,
   Activity,
   X,
+  RefreshCw,
+  Loader2,
   Moon,
   Zap,
   FileText,
@@ -42,6 +44,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  fetchAllSessions,
+  fetchWhoopRecovery,
+  fetchWhoopSleep,
+  fetchWhoopCycle,
+  fetchLatestSession,
+  type SessionEntry,
+} from "@/lib/api";
 
 function getWhoopColor(val: number) {
   if (val >= 65) return "#7EC8B8";
@@ -110,46 +120,7 @@ function CircularProgress({
   );
 }
 
-const cognitiveData = [
-  { day: "Mon", score: 72 },
-  { day: "Tue", score: 70 },
-  { day: "Wed", score: 68 },
-  { day: "Thu", score: 65 },
-  { day: "Fri", score: 68 },
-  { day: "Sat", score: 71 },
-  { day: "Sun", score: 68 },
-];
-
-const sleepOverlayBarData = [
-  { day: "Mon", score: 72 },
-  { day: "Tue", score: 65 },
-  { day: "Wed", score: 58 },
-  { day: "Thu", score: 81 },
-  { day: "Fri", score: 69 },
-  { day: "Sat", score: 75 },
-  { day: "Sun", score: 63 },
-];
-
-const recoveryOverlayBarData = [
-  { day: "Mon", score: 68 },
-  { day: "Tue", score: 72 },
-  { day: "Wed", score: 45 },
-  { day: "Thu", score: 81 },
-  { day: "Fri", score: 58 },
-  { day: "Sat", score: 76 },
-  { day: "Sun", score: 64 },
-];
-
-const strainOverlayBarData = [
-  { day: "Mon", strain: 8.2 },
-  { day: "Tue", strain: 12.1 },
-  { day: "Wed", strain: 5.4 },
-  { day: "Thu", strain: 14.0 },
-  { day: "Fri", strain: 9.8 },
-  { day: "Sat", strain: 6.5 },
-  { day: "Sun", strain: 11.3 },
-];
-
+// Placeholder data for metrics without backend endpoints
 const activityData = [
   { day: "Mon", steps: 3200 },
   { day: "Tue", steps: 4100 },
@@ -158,65 +129,6 @@ const activityData = [
   { day: "Fri", steps: 4500 },
   { day: "Sat", steps: 2100 },
   { day: "Sun", steps: 3400 },
-];
-
-const alerts = [
-  {
-    level: "warning",
-    title: "Increased word-finding pauses",
-    description: "5 instances detected in last conversation",
-    time: "2 hours ago",
-  },
-  {
-    level: "warning",
-    title: "Repeated questions",
-    description: "Same question asked 3 times in 4 minutes",
-    time: "2 hours ago",
-  },
-  {
-    level: "success",
-    title: "Medication taken on time",
-    description: "Morning medications confirmed at 8:32 AM",
-    time: "6 hours ago",
-  },
-];
-
-const recentConversations = [
-  {
-    id: 1,
-    time: "8:02 AM Today",
-    duration: "12 min",
-    summary: "Morning check-in, medication reminder, gentle stretches",
-    markers: 2,
-  },
-  {
-    id: 2,
-    time: "2:15 PM Yesterday",
-    duration: "8 min",
-    summary: "Asked about daughter Sarah's visit, discussed weekend plans",
-    markers: 1,
-  },
-  {
-    id: 3,
-    time: "7:45 PM Yesterday",
-    duration: "5 min",
-    summary: "Evening routine, sleep medication reminder",
-    markers: 0,
-  },
-  {
-    id: 4,
-    time: "9:00 AM Yesterday",
-    duration: "15 min",
-    summary: "Reminiscence therapy - looked at vacation photos from 2019",
-    markers: 0,
-  },
-  {
-    id: 5,
-    time: "3:30 PM 2 days ago",
-    duration: "6 min",
-    summary: "Medication refill request, insurance confirmation",
-    markers: 3,
-  },
 ];
 
 const upcomingEvents = [
@@ -236,6 +148,7 @@ const upcomingEvents = [
     type: "medication",
   },
 ];
+
 
 function MetricCard({
   title,
@@ -323,18 +236,67 @@ export default function DashboardOverview() {
 
   const [syncLoading, setSyncLoading] = useState(false);
   const [whoopData, setWhoopData] = useState({
-    sleep: 85,
+    sleep: 0,
     sleepConsistency: undefined as number | undefined,
     sleepEfficiency: undefined as number | undefined,
-    recovery: 72,
+    recovery: 0,
     recoveryRestingHeartRate: undefined as number | undefined,
     recoveryHrvRmssdMilli: undefined as number | undefined,
     recoverySpo2Percentage: undefined as number | undefined,
-    strainPercent: 32,
+    strainPercent: 0,
     strainKilojoule: undefined as number | undefined,
     strainAverageHeartRate: undefined as number | undefined,
     strainMaxHeartRate: undefined as number | undefined,
   });
+  const [latestSession, setLatestSession] = useState<SessionEntry | null>(null);
+  const [allSessions, setAllSessions] = useState<SessionEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Whoop weekly data for overlay charts
+  const [sleepOverlayBarData, setSleepOverlayBarData] = useState<{ day: string; score: number }[]>([]);
+  const [recoveryOverlayBarData, setRecoveryOverlayBarData] = useState<{ day: string; score: number }[]>([]);
+  const [strainOverlayBarData, setStrainOverlayBarData] = useState<{ day: string; strain: number }[]>([]);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetchLatestSession(),
+      fetchAllSessions(),
+    ]).then(([latest, sessions]) => {
+      setLatestSession(latest);
+      setAllSessions(sessions);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  // Fetch whoop weekly data for overlays on mount
+  useEffect(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    fetchWhoopSleep().then((d) => {
+      if (d?.records?.length) {
+        setSleepOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
+          day: r.start ? days[new Date(r.start).getDay()] : `D${i + 1}`,
+          score: Math.round(r.score?.sleep_performance_percentage ?? 0),
+        })));
+      }
+    }).catch(() => { });
+    fetchWhoopRecovery().then((d) => {
+      if (d?.records?.length) {
+        setRecoveryOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
+          day: r.created_at ? days[new Date(r.created_at).getDay()] : `D${i + 1}`,
+          score: Math.round(r.score?.recovery_score ?? 0),
+        })));
+      }
+    }).catch(() => { });
+    fetchWhoopCycle().then((d) => {
+      if (d?.records?.length) {
+        setStrainOverlayBarData(d.records.slice(0, 7).map((r: any, i: number) => ({
+          day: r.start ? days[new Date(r.start).getDay()] : `D${i + 1}`,
+          strain: r.score?.strain ?? 0,
+        })));
+      }
+    }).catch(() => { });
+  }, []);
+
   const [expandedWhoop, setExpandedWhoop] = useState<"sleep" | "recovery" | "strain" | null>(null);
   const [backdropReveal, setBackdropReveal] = useState(false);
   const [overlayReveal, setOverlayReveal] = useState(false);
@@ -421,6 +383,60 @@ export default function DashboardOverview() {
       setSyncLoading(false);
     }
   };
+
+  // Derive cognitive chart data from sessions
+  const cognitiveData = allSessions.map((s, i) => ({
+    day: s.session_date || `S${i + 1}`,
+    score: Math.round(100 - (s.analysis_result?.risk_score ?? 0)),
+  }));
+
+  // Derive alerts from latest session
+  const alerts: { title: string; description: string; level: string; time: string }[] = [];
+  if (latestSession?.analysis_result?.rule_based?.markers) {
+    const flagged = latestSession.analysis_result.rule_based.markers.filter((m) => m.flagged);
+    flagged.forEach((m) => {
+      alerts.push({
+        level: m.severity === "severe" ? "critical" : "warning",
+        title: `Flagged: ${m.marker.replace(/_/g, " ")}`,
+        description: m.evidence?.[0] || `Value: ${m.value} (threshold: ${m.threshold})`,
+        time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+      });
+    });
+  }
+  if (alerts.length === 0 && latestSession) {
+    alerts.push({
+      level: "success",
+      title: "All markers normal",
+      description: latestSession.analysis_result?.rule_based_summary || "No concerns detected",
+      time: latestSession.timestamp ? new Date(latestSession.timestamp).toLocaleTimeString() : "Recent",
+    });
+  }
+
+  // Derive recent conversations from sessions
+  const recentConversations = allSessions.slice().reverse().slice(0, 5).map((s, i) => {
+    const markerCount = s.analysis_result?.rule_based?.markers?.filter((m) => m.flagged).length ?? 0;
+    return {
+      id: String(i + 1),
+      time: s.session_date || new Date(s.timestamp).toLocaleString(),
+      duration: `${s.analysis_result?.rule_based?.total_words ?? 0} words`,
+      markers: markerCount,
+      summary: s.analysis_result?.rule_based_summary || "Session recorded",
+    };
+  });
+
+  // Latest cognitive score
+  const latestCogScore = latestSession
+    ? Math.round(100 - (latestSession.analysis_result?.risk_score ?? 0))
+    : null;
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-500">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative max-w-7xl mx-auto space-y-6">
@@ -777,59 +793,63 @@ export default function DashboardOverview() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             Recent Alerts
           </h2>
-          <div className="grid gap-3">
-            {alerts.map((alert, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
-                  ? "bg-amber-50/50 border-amber-100"
-                  : alert.level === "critical"
-                    ? "bg-red-50/50 border-red-100"
-                    : "bg-green-50/50 border-green-100"
-                  }`}
-              >
+          {alerts.length === 0 ? (
+            <p className="text-sm text-gray-400 p-4">No sessions recorded yet. Start a conversation on the mobile app.</p>
+          ) : (
+            <div className="grid gap-3">
+              {alerts.map((alert, i) => (
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
-                    ? "bg-alert-yellow/20"
+                  key={i}
+                  className={`flex items-center gap-4 p-4 rounded-xl border ${alert.level === "warning"
+                    ? "bg-amber-50/50 border-amber-100"
                     : alert.level === "critical"
-                      ? "bg-alert-red/20"
-                      : "bg-alert-green/20"
+                      ? "bg-red-50/50 border-red-100"
+                      : "bg-green-50/50 border-green-100"
                     }`}
                 >
-                  {alert.level === "success" ? (
-                    <CheckCircle2 className="w-5 h-5 text-alert-green" />
-                  ) : (
-                    <AlertTriangle
-                      className={`w-5 h-5 ${alert.level === "warning"
-                        ? "text-alert-yellow"
-                        : "text-alert-red"
-                        }`}
-                    />
-                  )}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${alert.level === "warning"
+                      ? "bg-alert-yellow/20"
+                      : alert.level === "critical"
+                        ? "bg-alert-red/20"
+                        : "bg-alert-green/20"
+                      }`}
+                  >
+                    {alert.level === "success" ? (
+                      <CheckCircle2 className="w-5 h-5 text-alert-green" />
+                    ) : (
+                      <AlertTriangle
+                        className={`w-5 h-5 ${alert.level === "warning"
+                          ? "text-alert-yellow"
+                          : "text-alert-red"
+                          }`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900">{alert.title}</p>
+                    <p className="text-sm text-gray-500">{alert.description}</p>
+                  </div>
+                  <span className="text-xs text-gray-400 flex-shrink-0">
+                    {alert.time}
+                  </span>
+                  <Link href="/dashboard/cognitive">
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </Link>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{alert.title}</p>
-                  <p className="text-sm text-gray-500">{alert.description}</p>
-                </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">
-                  {alert.time}
-                </span>
-                <Link href="/dashboard/cognitive">
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </Link>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Metric cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Cognitive Score"
-            value="68"
+            value={latestCogScore !== null ? String(latestCogScore) : "--"}
             unit="/100"
-            trend="down"
-            trendValue="-4.2%"
+            trend={latestCogScore !== null && latestCogScore >= 65 ? "up" : latestCogScore !== null ? "down" : "stable"}
+            trendValue={latestSession ? `Risk: ${latestSession.analysis_result?.risk_score ?? "?"}` : "No data"}
             icon={Brain}
             color="#5B9A8B"
           >
@@ -892,27 +912,26 @@ export default function DashboardOverview() {
 
           <MetricCard
             title="Social Engagement"
-            value="8"
+            value={String(allSessions.length || 0)}
             unit="conversations"
-            trend="up"
-            trendValue="+2"
+            trend={allSessions.length > 0 ? "up" : "stable"}
+            trendValue={allSessions.length > 0 ? `${allSessions.length} total` : "No data"}
             icon={MessageCircle}
             color="#E8B298"
           >
             <div className="flex items-center gap-2 mt-1">
-              {[4, 3, 5, 2, 4, 6, 3].map((val, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full rounded-sm bg-[#E8B298]/20"
-                    style={{ height: `${val * 6}px` }}
-                  >
+              {(allSessions.length > 0 ? allSessions.slice(-7) : []).map((s, i) => {
+                const score = s.analysis_result?.risk_score ?? 0;
+                const h = Math.max(6, Math.min(36, Math.round(score * 1.5)));
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div
                       className="w-full rounded-sm bg-[#E8B298]"
-                      style={{ height: `${val * 6}px`, opacity: 0.7 }}
+                      style={{ height: `${h}px`, opacity: 0.7 }}
                     />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </MetricCard>
         </div>
@@ -936,41 +955,45 @@ export default function DashboardOverview() {
                 </div>
               </CardHeader>
               <CardContent className="px-0">
-                <div className="divide-y divide-gray-50">
-                  {recentConversations.map((conv) => (
-                    <Link
-                      key={conv.id}
-                      href="/dashboard/transcript"
-                      className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#F8FAF9]/50 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center flex-shrink-0">
-                        <MessageCircle className="w-5 h-5 text-[#5B9A8B]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-gray-900">
-                            {conv.time}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {conv.duration}
-                          </span>
-                          {conv.markers > 0 && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0"
-                            >
-                              {conv.markers} marker{conv.markers !== 1 && "s"}
-                            </Badge>
-                          )}
+                {recentConversations.length === 0 ? (
+                  <p className="text-sm text-gray-400 px-6 py-4">No conversations yet. Start a chat on the mobile app.</p>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {recentConversations.map((conv) => (
+                      <Link
+                        key={conv.id}
+                        href="/dashboard/transcript"
+                        className="flex items-center gap-4 px-6 py-3.5 hover:bg-[#F8FAF9]/50 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-[#5B9A8B]/10 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-5 h-5 text-[#5B9A8B]" />
                         </div>
-                        <p className="text-sm text-gray-500 truncate">
-                          {conv.summary}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                    </Link>
-                  ))}
-                </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-sm font-medium text-gray-900">
+                              {conv.time}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {conv.duration}
+                            </span>
+                            {conv.markers > 0 && (
+                              <Badge
+                                variant="secondary"
+                                className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0"
+                              >
+                                {conv.markers} marker{conv.markers !== 1 && "s"}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 truncate">
+                            {conv.summary}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -988,18 +1011,18 @@ export default function DashboardOverview() {
                   <div key={i} className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center ${event.type === "medical"
-                        ? "bg-care-blue/10"
+                        ? "bg-blue-100"
                         : event.type === "family"
-                          ? "bg-care-orange/10"
-                          : "bg-care-purple/10"
+                          ? "bg-orange-100"
+                          : "bg-purple-100"
                         }`}
                     >
                       {event.type === "medical" ? (
-                        <Calendar className="w-4 h-4 text-care-blue" />
+                        <Calendar className="w-4 h-4 text-blue-600" />
                       ) : event.type === "family" ? (
-                        <Calendar className="w-4 h-4 text-care-orange" />
+                        <Calendar className="w-4 h-4 text-orange-600" />
                       ) : (
-                        <Pill className="w-4 h-4 text-care-purple" />
+                        <Pill className="w-4 h-4 text-purple-600" />
                       )}
                     </div>
                     <div>
@@ -1024,19 +1047,19 @@ export default function DashboardOverview() {
                   href="/dashboard/cognitive"
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <Brain className="w-5 h-5 text-care-blue" />
+                  <Brain className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-gray-700">
                     View cognitive report
                   </span>
                 </Link>
                 <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
-                  <FileText className="w-5 h-5 text-care-purple" />
+                  <FileText className="w-5 h-5 text-purple-600" />
                   <span className="text-sm font-medium text-gray-700">
                     Export report for doctor
                   </span>
                 </button>
                 <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors w-full text-left">
-                  <Clock className="w-5 h-5 text-care-orange" />
+                  <Clock className="w-5 h-5 text-orange-600" />
                   <span className="text-sm font-medium text-gray-700">
                     Schedule appointment
                   </span>
