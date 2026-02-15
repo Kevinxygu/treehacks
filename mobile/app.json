@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "CareCompanion",
+    "slug": "carecompanion",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F0F7FF",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.carecompanion.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "CareCompanion needs microphone access to listen to your voice and help with tasks."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F0F7FF"
+      },
+      "package": "com.carecompanion.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "CareCompanion needs microphone access to listen to your voice and help with tasks."
+        }
+      ],
+      "expo-asset"
+    ]
+  }
+}
