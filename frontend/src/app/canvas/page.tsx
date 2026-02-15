@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -17,6 +17,16 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import "@xyflow/react/dist/style.css";
+
+const FASTAPI_BASE =
+  process.env.BACKEND_BASE_URL || "http://localhost:8000";
+const FAMILY_PHOTOS_FALLBACKS = [
+  "/images/reminiscence/IMG_0017.jpg",
+  "/images/reminiscence/IMG_0023.jpg",
+  "/images/reminiscence/IMG_0034.jpg",
+  "/images/reminiscence/IMG_0036.jpg",
+  "/images/reminiscence/IMG_0042.jpg",
+];
 
 type ImageNodeData = {
   image: string;
@@ -93,7 +103,7 @@ function ImageBubbleNode({ data, selected, id }: NodeProps<ImageNode>) {
 
 const nodeTypes = { imageNode: ImageBubbleNode, textNode: TextBubbleNode };
 
-const initialNodes: CanvasNode[] = [
+const baseNodes: CanvasNode[] = [
   {
     id: "0",
     type: "textNode",
@@ -161,62 +171,31 @@ const initialNodes: CanvasNode[] = [
     position: { x: 740, y: 20 },
     data: { text: "This week, for the family" },
   },
-  {
-    id: "7",
-    type: "imageNode",
-    position: { x: 600, y: 120 },
-    data: {
-      image: "/images/reminiscence/IMG_0017.jpg",
-      label: "A breath held in light",
-      description: "Where the air stills and the moment stays.",
-      location: "Treehacks, Stanford",
-    },
-  },
-  {
-    id: "8",
-    type: "imageNode",
-    position: { x: 880, y: 120 },
-    data: {
-      image: "/images/reminiscence/IMG_0023.jpg",
-      label: "What the afternoon remembered",
-      description: "Soft edges and the weight of hours.",
-      location: "Treehacks, Stanford",
-    },
-  },
-  {
-    id: "9",
-    type: "imageNode",
-    position: { x: 740, y: 250 },
-    data: {
-      image: "/images/reminiscence/IMG_0034.jpg",
-      label: "The world through a window",
-      description: "Framed by glass, unframed by time.",
-      location: "Treehacks, Stanford",
-    },
-  },
-  {
-    id: "10",
-    type: "imageNode",
-    position: { x: 580, y: 320 },
-    data: {
-      image: "/images/reminiscence/IMG_0036.jpg",
-      label: "Stillness before the turn",
-      description: "Something about to change, holding its breath.",
-      location: "Treehacks, Stanford",
-    },
-  },
-  {
-    id: "11",
-    type: "imageNode",
-    position: { x: 900, y: 320 },
-    data: {
-      image: "/images/reminiscence/IMG_0042.jpg",
-      label: "Echo of a place",
-      description: "Where you were, and where it stays.",
-      location: "Treehacks, Stanford",
-    },
-  },
 ];
+
+const FAMILY_NODE_POSITIONS = [
+  { x: 600, y: 120 },
+  { x: 880, y: 120 },
+  { x: 740, y: 250 },
+  { x: 580, y: 320 },
+  { x: 900, y: 320 },
+];
+
+function buildFamilyPhotoNodes(urls: string[]): ImageNode[] {
+  const padded = urls.slice(0, 5);
+  for (let i = padded.length; i < 5; i++) {
+    padded.push(FAMILY_PHOTOS_FALLBACKS[i]);
+  }
+  return padded.map((image, i) => ({
+    id: String(7 + i),
+    type: "imageNode" as const,
+    position: FAMILY_NODE_POSITIONS[i],
+    data: { image, label: "Photo" },
+  }));
+}
+
+const initialFamilyPhotoNodes = buildFamilyPhotoNodes([]);
+const initialNodes: CanvasNode[] = [...baseNodes, ...initialFamilyPhotoNodes];
 
 const initialEdges: Edge[] = [
   { id: "e0-1", source: "0", target: "1" },
@@ -240,12 +219,49 @@ const SLIDE_OFFSET = 80;
 const FOCUS_IMAGE_SIZE = 380;
 const nodeOrder = initialNodes.map((n) => n.id);
 
+type FamilyPhotosState = {
+  photos: string[];
+  syncing: boolean;
+} | null;
+
 export default function CanvasPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [focusedNode, setFocusedNode] = useState<CanvasNode | null>(null);
   const [slideDirection, setSlideDirection] = useState(1);
+  const [familyPhotos, setFamilyPhotos] = useState<FamilyPhotosState>(null);
   const closeExitDirectionRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFamilyPhotos = async () => {
+      try {
+        const res = await fetch(
+          `${FASTAPI_BASE}/companionship/family-photos?family_id=${process.env.NEXT_PUBLIC_FAMILY_ID || "treehacks"}`
+        );
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setFamilyPhotos({
+          photos: data.photos ?? [],
+          syncing: Boolean(data.syncing),
+        });
+      } catch {
+        if (!cancelled) setFamilyPhotos({ photos: [], syncing: false });
+      }
+    };
+    fetchFamilyPhotos();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (familyPhotos === null) return;
+    setNodes([...baseNodes, ...buildFamilyPhotoNodes(familyPhotos.photos)]);
+  }, [familyPhotos, setNodes]);
+
+  const isLoading = familyPhotos === null;
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -296,6 +312,17 @@ export default function CanvasPage() {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-slate-900">
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-900/95"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <span className="rounded-full bg-teal-500/90 px-6 py-3 text-lg font-medium text-white shadow-lg">
+            Loading...
+          </span>
+        </div>
+      )}
       <style>{`
         @keyframes bubble-float {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }

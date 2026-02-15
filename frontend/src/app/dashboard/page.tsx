@@ -21,7 +21,6 @@ import {
   Battery,
   Activity,
   X,
-  RefreshCw,
   Loader2,
   Moon,
   Zap,

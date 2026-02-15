@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(companionship_router)
+app.include_router(companionship_router, prefix="/companionship")
 app.include_router(whoop_router)
 
 analyzer = TranscriptAnalyzer()
