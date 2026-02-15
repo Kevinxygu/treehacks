@@ -50,7 +50,7 @@ cd "$ROOT_DIR/mobile"
 npx expo start &
 MOBILE_PID=$!
 
-# Kill all on exit
+# End all processes on end
 trap "kill $BACKEND_PID $FRONTEND_PID $MOBILE_PID 2>/dev/null" EXIT
 
 wait
