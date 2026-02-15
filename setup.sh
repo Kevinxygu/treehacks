@@ -29,10 +29,15 @@ echo "Installing backend dependencies..."
 cd "$ROOT_DIR/backend"
 uv sync
 
+echo "Installing Node agent dependencies..."
+cd "$ROOT_DIR/backend/vercel-agent"
+npm install
+
 # Start all servers
 echo ""
 echo "Starting services:"
-echo "  - Backend: http://localhost:8000"
+echo "  - FastAPI (analytics): http://localhost:8000  — transcript analysis, /analyze-transcript-ai"
+echo "  - Node agent (voice-chat): http://localhost:3001"
 echo "  - Frontend: http://localhost:3002"
 echo "  - Mobile: Expo dev server"
 echo "Press Ctrl+C to stop all services."
@@ -41,6 +46,10 @@ echo ""
 cd "$ROOT_DIR/backend"
 uv run uvicorn server:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
+
+cd "$ROOT_DIR/backend/vercel-agent"
+npm run dev &
+AGENT_PID=$!
 
 cd "$ROOT_DIR/frontend"
 PORT=3002 npm run dev &
@@ -51,6 +60,6 @@ npx expo start &
 MOBILE_PID=$!
 
 # End all processes on end
-trap "kill $BACKEND_PID $FRONTEND_PID $MOBILE_PID 2>/dev/null" EXIT
+trap "kill $BACKEND_PID $AGENT_PID $FRONTEND_PID $MOBILE_PID 2>/dev/null" EXIT
 
 wait

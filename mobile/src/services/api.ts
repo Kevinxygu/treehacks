@@ -1,12 +1,16 @@
-import { API_URL, FASTAPI_URL } from "@env";
+import { API_URL, FASTAPI_URL, IP_ADDRESS } from "@env";
+import { DEV_API_HOST, AGENT_PORT, FASTAPI_PORT } from "../config";
 
 // ------------------------------------------------------------------
-// API Configuration
-// Loaded from .env file for local development
+// API Configuration. In dev, .env (API_URL, IP_ADDRESS) may be cached — config.ts is used as fallback.
 // ------------------------------------------------------------------
-const API_BASE = __DEV__ ? API_URL : "https://your-production-api.com"; // production
+const API_BASE = __DEV__ ? (API_URL ?? (IP_ADDRESS ? `http://${IP_ADDRESS}:${AGENT_PORT}` : `http://${DEV_API_HOST}:${AGENT_PORT}`)) : "https://your-production-api.com";
 
-const FASTAPI_BASE = __DEV__ ? FASTAPI_URL : "https://your-production-api.com";
+const FASTAPI_BASE = __DEV__ ? (FASTAPI_URL ?? (IP_ADDRESS ? `http://${IP_ADDRESS}:${FASTAPI_PORT}` : `http://${DEV_API_HOST}:${FASTAPI_PORT}`)) : "https://your-production-api.com";
+
+if (__DEV__) {
+    console.log("[Bloom API]", "API_BASE:", API_BASE, "| FASTAPI_BASE:", FASTAPI_BASE);
+}
 
 // ---------- Types ----------
 
@@ -18,7 +22,7 @@ export interface CardItem {
 }
 
 export interface ResponseCard {
-    type: "ride_options" | "medications" | "contacts" | "bills";
+    type: "ride_options" | "medications" | "contacts" | "bills" | "weather" | "meeting_types" | "meeting_slots" | "meeting_booked" | "meetings";
     title: string;
     items?: CardItem[];
     data?: Record<string, unknown>;

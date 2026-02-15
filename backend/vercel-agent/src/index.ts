@@ -503,6 +503,93 @@ function buildCardsFromToolResults(steps: Array<{ toolResults: Array<{ toolName:
                 cards.push({ type: "bills", title: "Bill reminders", items });
                 continue;
             }
+            // Weather
+            if (name === "getWeather" && result && !Array.isArray(result) && "location" in result && !("error" in result)) {
+                const r = result as {
+                    location: string;
+                    current?: { temperature?: string; condition?: string; wind_speed?: string; humidity?: string };
+                    forecast?: Array<{ date: string; high?: string; low?: string; condition?: string; rain_chance?: string }>;
+                };
+                const items: CardItem[] = [];
+                if (r.current) {
+                    items.push({
+                        id: "current",
+                        title: r.current.condition ?? "Current",
+                        subtitle: [r.current.temperature, r.current.humidity, r.current.wind_speed].filter(Boolean).join(" · "),
+                    });
+                }
+                if (r.forecast?.length) {
+                    r.forecast.forEach((d, i) => {
+                        items.push({
+                            id: `day-${i}`,
+                            title: d.date,
+                            subtitle: [d.high, d.low, d.condition, d.rain_chance].filter(Boolean).join(" · "),
+                        });
+                    });
+                }
+                cards.push({
+                    type: "weather",
+                    title: "Weather",
+                    data: { location: r.location },
+                    ...(items.length && { items }),
+                });
+                continue;
+            }
+            // Meeting / appointment tools
+            if (name === "getEventTypes" && result && !Array.isArray(result) && "eventTypes" in result) {
+                const r = result as { eventTypes?: Array<{ id?: string; title?: string; lengthInMinutes?: number; description?: string }> };
+                const list = r.eventTypes ?? [];
+                const items: CardItem[] = list.map((et, i) => ({
+                    id: String(et.id ?? i),
+                    title: String(et.title ?? `${et.lengthInMinutes ?? "?"} min`),
+                    subtitle: et.description ?? (et.lengthInMinutes ? `${et.lengthInMinutes} min` : undefined),
+                }));
+                if (items.length) cards.push({ type: "meeting_types", title: "Meeting types", items });
+                continue;
+            }
+            if (name === "getAvailableSlots" && result && !Array.isArray(result) && "availableSlots" in result) {
+                const r = result as {
+                    durationMinutes?: number;
+                    availableSlots?: Array<{ date: string; slots: Array<{ localTime: string; utc: string }> }>;
+                };
+                const slots = r.availableSlots ?? [];
+                const items: CardItem[] = slots.flatMap((day) =>
+                    day.slots.slice(0, 6).map((s, i) => ({
+                        id: `${day.date}-${i}`,
+                        title: day.date,
+                        subtitle: s.localTime,
+                        utc: s.utc,
+                    })),
+                );
+                if (items.length)
+                    cards.push({
+                        type: "meeting_slots",
+                        title: `Available ${r.durationMinutes ?? ""} min slots`.trim(),
+                        data: { durationMinutes: r.durationMinutes },
+                        items,
+                    });
+                continue;
+            }
+            if (name === "bookAppointment" && result && !Array.isArray(result) && "success" in result && (result as { success?: boolean }).success) {
+                const r = result as { localTime?: string; meetingUrl?: string | null; message?: string };
+                cards.push({
+                    type: "meeting_booked",
+                    title: "Appointment booked",
+                    data: { localTime: r.localTime, meetingUrl: r.meetingUrl, message: r.message },
+                });
+                continue;
+            }
+            if (name === "getUpcomingAppointments" && result && !Array.isArray(result) && "bookings" in result) {
+                const r = result as { bookings?: Array<{ title?: string; localStart?: string; location?: string }> };
+                const list = r.bookings ?? [];
+                const items: CardItem[] = list.map((b, i) => ({
+                    id: String(i),
+                    title: String(b.title ?? "Appointment"),
+                    subtitle: [b.localStart, b.location].filter(Boolean).join(" · "),
+                }));
+                if (items.length) cards.push({ type: "meetings", title: "Upcoming appointments", items });
+                continue;
+            }
         }
     }
     return cards;

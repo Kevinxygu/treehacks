@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Animated, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
@@ -8,7 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { Colors } from "../constants/colors";
-import { voiceChat, analyzeTranscript, type ChatMessage } from "../services/api";
+import { voiceChat, analyzeTranscript, type ChatMessage, type ResponseCard } from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Conversation">;
 
@@ -19,6 +19,8 @@ interface Message {
     role: "user" | "assistant";
     text: string;
     timestamp: string;
+    /** Optional cards from the backend (ride options, medications, contacts, bills). */
+    cards?: ResponseCard[];
 }
 
 // ---------- Typing dots ----------
@@ -47,6 +49,49 @@ function TypingDots() {
             ))}
         </View>
     );
+}
+
+// ---------- Card block (ride options, medications, contacts, bills, weather, meetings) ----------
+
+function MessageCards({ cards }: { cards: ResponseCard[] }) {
+  return (
+    <View style={styles.cardsContainer}>
+      {cards.map((card, idx) => (
+        <View key={`${card.type}-${idx}`} style={styles.cardBlock}>
+          <Text style={styles.cardBlockTitle}>{card.title}</Text>
+          {card.type === "weather" && card.data?.location ? (
+            <Text style={styles.cardItemSubtitle}>{String(card.data.location)}</Text>
+          ) : null}
+          {card.type === "meeting_booked" && card.data ? (
+            <>
+              {(card.data.message || card.data.localTime) ? (
+                <Text style={styles.cardItemSubtitle}>
+                  {String(card.data.message ?? card.data.localTime ?? "")}
+                </Text>
+              ) : null}
+              {card.data.meetingUrl ? (
+                <TouchableOpacity onPress={() => Linking.openURL(String(card.data!.meetingUrl))} style={styles.cardLink}>
+                  <Text style={styles.cardLinkText}>Open meeting link</Text>
+                </TouchableOpacity>
+              ) : null}
+            </>
+          ) : null}
+          {card.items && card.items.length > 0 ? (
+            card.items.map((item, i) => (
+              <View key={item.id ?? i} style={styles.cardItem}>
+                <Text style={styles.cardItemTitle}>{item.title}</Text>
+                {item.subtitle ? <Text style={styles.cardItemSubtitle}>{item.subtitle}</Text> : null}
+              </View>
+            ))
+          ) : !card.data?.localTime && !card.data?.message && (card.data?.pickup || card.data?.destination) ? (
+            <Text style={styles.cardItemSubtitle}>
+              {[card.data.pickup, card.data.destination].filter(Boolean).join(" → ")}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
 }
 
 // ---------- Conversation Screen ----------
@@ -181,13 +226,14 @@ export default function ConversationScreen() {
 
         setIsProcessing(false);
 
-        // Add assistant response
+        // Add assistant response (with optional cards)
         if (result.response) {
           const assistantMsg: Message = {
             id: `ai-${Date.now()}`,
             role: "assistant",
             text: result.response,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            ...(result.cards && result.cards.length > 0 && { cards: result.cards }),
           };
           setMessages((prev) => [...prev, assistantMsg]);
 
@@ -209,13 +255,6 @@ export default function ConversationScreen() {
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
         setMessages((prev) => [...prev, errorMsg]);
-      }
-    } catch (err) {
-      console.error("Failed to stop recording", err);
-      setRecording(null);
-      setIsProcessing(false);
-    }
-  }, [recording, chatHistory, playAudioBase64]);
       }
     } catch (err) {
       console.error("Failed to stop recording", err);
@@ -291,6 +330,7 @@ export default function ConversationScreen() {
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>{item.text}</Text>
           <Text style={[styles.bubbleTime, isUser ? styles.bubbleTimeUser : styles.bubbleTimeAssistant]}>{item.timestamp}</Text>
         </View>
+        {!isUser && item.cards && item.cards.length > 0 ? <MessageCards cards={item.cards} /> : null}
       </View>
     );
   };
@@ -453,6 +493,22 @@ const styles = StyleSheet.create({
   },
   bubbleTimeUser: { color: Colors.gray400 },
   bubbleTimeAssistant: { color: "rgba(255,255,255,0.6)" },
+
+  // Cards (ride options, medications, contacts, bills)
+  cardsContainer: { marginTop: 10, gap: 10, alignSelf: "flex-end", maxWidth: "85%" },
+  cardBlock: {
+    backgroundColor: Colors.glassWhite,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.glassBorder,
+  },
+  cardBlockTitle: { fontSize: 15, fontWeight: "600", color: Colors.gray700, marginBottom: 8 },
+  cardItem: { paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: Colors.glassBorder },
+  cardItemTitle: { fontSize: 16, fontWeight: "500", color: Colors.gray800 },
+  cardItemSubtitle: { fontSize: 14, color: Colors.gray500, marginTop: 2 },
+  cardLink: { marginTop: 10, paddingVertical: 8 },
+  cardLinkText: { fontSize: 15, fontWeight: "600", color: Colors.careBlue },
 
   // Typing dots
   typingRow: {

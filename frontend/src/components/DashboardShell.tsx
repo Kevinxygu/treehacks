@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Brain, MessageSquareText, Bell, User, ChevronRight, Settings } from "lucide-react";
+import { LayoutDashboard, Brain, MessageSquareText, Bell, User, ChevronRight, Settings, Palette } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { DashboardUserProvider } from "@/contexts/DashboardUserContext";
@@ -11,6 +11,7 @@ const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
     { href: "/dashboard/cognitive", icon: Brain, label: "Cognitive Health" },
     { href: "/dashboard/transcript", icon: MessageSquareText, label: "Transcripts" },
+    { href: "/canvas", icon: Palette, label: "Canvas" },
     { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 
