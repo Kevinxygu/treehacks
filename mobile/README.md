@@ -1,4 +1,4 @@
-# CareCompanion Mobile (React Native / Expo)
+# Bloom Mobile (React Native / Expo)
 
 The elderly-facing companion app. Records voice, facilitates conversations,
 and sends audio to the FastAPI backend for cognitive analysis.

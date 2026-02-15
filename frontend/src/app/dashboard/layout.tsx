@@ -8,10 +8,11 @@ import {
   MessageSquareText,
   Activity,
   Bell,
-  Settings,
   User,
   ChevronRight,
+  Settings,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -35,11 +36,15 @@ export default function DashboardLayout({
           <div className="flex items-center gap-8">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-care-blue to-care-purple flex items-center justify-center">
-                <Activity className="w-4 h-4 text-white" />
-              </div>
+              <Image
+                src="/images/logo-dark.png"
+                alt="Bloom Logo"
+                width={32}
+                height={32}
+                className="rounded-lg shadow-sm"
+              />
               <span className="font-semibold text-lg text-gray-900">
-                CareCompanion
+                Bloom
               </span>
             </Link>
 

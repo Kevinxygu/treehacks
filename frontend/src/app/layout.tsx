@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "CareCompanion - AI Voice Assistant for Elderly Care",
+  title: "Bloom - AI Voice Assistant for Elderly Care",
   description:
     "AI-powered voice companion that detects cognitive decline, provides companionship, and helps with daily tasks.",
 };

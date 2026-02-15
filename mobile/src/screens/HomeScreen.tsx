@@ -149,7 +149,7 @@ export default function HomeScreen() {
         {/* Top bar */}
         <View style={styles.topBar}>
           <View style={styles.titlePill}>
-            <Text style={styles.titleText}>CareCompanion</Text>
+            <Text style={styles.titleText}>Bloom</Text>
           </View>
         </View>
 
