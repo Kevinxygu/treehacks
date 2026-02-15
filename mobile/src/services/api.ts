@@ -5,7 +5,7 @@ import { API_URL, FASTAPI_URL } from "@env";
 // Loaded from .env file for local development
 // ------------------------------------------------------------------
 const API_BASE = __DEV__
-    ? " vercel-agent-two.vercel.app"
+    ? "https://vercel-agent-two.vercel.app"
     : "https://your-production-api.com"; // production
 
 const FASTAPI_BASE = __DEV__
