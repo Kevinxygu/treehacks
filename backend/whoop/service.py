@@ -16,38 +16,34 @@ AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 API_BASE = "https://api.prod.whoop.com/developer"
 REDIRECT_URI = "http://127.0.0.1:8765/callback"
-SCOPES = "read:sleep offline"
+SCOPES = "read:sleep read:cycles read:recovery offline"
+
+CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]
+CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
+REFRESH_TOKEN = os.environ.get("WHOOP_REFRESH_TOKEN")
 
 
 def refresh_access_token() -> tuple[str, str]:
-    client_id = os.environ["WHOOP_CLIENT_ID"]
-    client_secret = os.environ["WHOOP_CLIENT_SECRET"]
-    refresh_token = os.environ.get("WHOOP_REFRESH_TOKEN")
-    if not refresh_token:
-        raise ValueError("WHOOP_REFRESH_TOKEN not set")
-
     resp = requests.post(
         TOKEN_URL,
         data={
             "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-            "client_id": client_id,
-            "client_secret": client_secret,
+            "refresh_token": REFRESH_TOKEN,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
             "scope": SCOPES,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     resp.raise_for_status()
     data = resp.json()
-    return data["access_token"], data.get("refresh_token") or refresh_token
+    return data["access_token"], data.get("refresh_token") or REFRESH_TOKEN
 
 
 def run_oauth_flow() -> str:
-    client_id = os.environ["WHOOP_CLIENT_ID"]
-    client_secret = os.environ["WHOOP_CLIENT_SECRET"]
     state = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     params = {
-        "client_id": client_id,
+        "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
         "response_type": "code",
         "scope": SCOPES,
@@ -87,8 +83,8 @@ def run_oauth_flow() -> str:
         data={
             "grant_type": "authorization_code",
             "code": code,
-            "client_id": client_id,
-            "client_secret": client_secret,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
             "redirect_uri": REDIRECT_URI,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -102,7 +98,7 @@ def run_oauth_flow() -> str:
 
 
 def get_access_token() -> str:
-    if os.environ.get("WHOOP_REFRESH_TOKEN"):
+    if REFRESH_TOKEN:
         access_token, _ = refresh_access_token()
         return access_token
     return run_oauth_flow()
@@ -136,6 +132,67 @@ def get_weekly_sleep() -> list[dict]:
             "performance_percent": score.get("sleep_performance_percentage"),
             "consistency_percent": score.get("sleep_consistency_percentage"),
             "hours_in_bed": hours,
+        })
+    return records
+
+
+def _auth_headers() -> dict:
+    access_token = get_access_token()
+    return {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+
+def _week_params() -> dict:
+    end_time = datetime.utcnow()
+    start_time = end_time - timedelta(days=7)
+    return {
+        "start": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "end": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "limit": 25,
+    }
+
+
+def get_weekly_cycle() -> list[dict]:
+    url = f"{API_BASE}/v2/cycle"
+    response = requests.get(url, headers=_auth_headers(), params=_week_params())
+    response.raise_for_status()
+    data = response.json()
+    records = []
+    for r in data.get("records", []):
+        score = r.get("score", {})
+        records.append({
+            "id": r.get("id"),
+            "date": r["start"][:10],
+            "strain": score.get("strain"),
+            "kilojoule": score.get("kilojoule"),
+            "average_heart_rate": score.get("average_heart_rate"),
+            "max_heart_rate": score.get("max_heart_rate"),
+            "score_state": r.get("score_state"),
+        })
+    return records
+
+
+def get_weekly_recovery() -> list[dict]:
+    url = f"{API_BASE}/v2/recovery"
+    response = requests.get(url, headers=_auth_headers(), params=_week_params())
+    response.raise_for_status()
+    data = response.json()
+    records = []
+    for r in data.get("records", []):
+        score = r.get("score") or {}
+        records.append({
+            "cycle_id": r.get("cycle_id"),
+            "sleep_id": r.get("sleep_id"),
+            "created_at": r.get("created_at", "")[:10],
+            "score_state": r.get("score_state"),
+            "recovery_score": score.get("recovery_score"),
+            "resting_heart_rate": score.get("resting_heart_rate"),
+            "hrv_rmssd_milli": score.get("hrv_rmssd_milli"),
+            "spo2_percentage": score.get("spo2_percentage"),
+            "skin_temp_celsius": score.get("skin_temp_celsius"),
+            "user_calibrating": score.get("user_calibrating"),
         })
     return records
 
