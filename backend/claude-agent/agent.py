@@ -43,9 +43,6 @@ CAL_API_KEY = os.environ.get("CAL_API_KEY", "")
 GMAIL_EMAIL = os.environ.get("GMAIL_EMAIL", "")
 GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
 
-# Optional - Other
-INSTACART_API_KEY = os.environ.get("INSTACART_API_KEY", "")
-NOAA_API_TOKEN = os.environ.get("NOAA_API_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # System Prompt
@@ -77,19 +74,15 @@ You can help with:
    - Send emails to family members ("Email my daughter that I'm doing well")
    - Check for important emails
 
-5. **Grocery Shopping** (Instacart)
-   - Create shopping lists
-   - Find nearby stores
-
-6. **Weather** (Weather MCP)
+5. **Weather** (Weather MCP)
    - Check weather before outings ("Should I go out today?")
    - Weather alerts and air quality
 
-7. **Emergency Contacts & Bills** (MongoDB database)
+6. **Emergency Contacts & Bills** (MongoDB database)
    - Store and retrieve emergency contact info
    - Track upcoming bills and due dates
 
-8. **Personal Preferences** (Memory MCP + MongoDB)
+7. **Personal Preferences** (Memory MCP + MongoDB)
    - Remember allergies, preferred doctors, pharmacy info
    - Store personal context across conversations
 
@@ -188,14 +181,10 @@ def build_mcp_servers() -> dict:
             reasons.append("run setup_mcps.sh")
         print(f"  [-] Gmail MCP - SKIPPED ({', '.join(reasons)})")
 
-    # --- Weather MCP (no API key needed, NOAA token optional) ---
-    weather_env = {}
-    if NOAA_API_TOKEN:
-        weather_env["NOAA_API_TOKEN"] = NOAA_API_TOKEN
+    # --- Weather MCP (no API key needed) ---
     servers["weather"] = {
         "command": "npx",
         "args": ["-y", "@weather-mcp/server"],
-        **({"env": weather_env} if weather_env else {}),
     }
     allowed.append("mcp__weather__*")
     print("  [+] Weather MCP (forecasts, alerts)")
@@ -209,18 +198,6 @@ def build_mcp_servers() -> dict:
     }
     allowed.append("mcp__memory__*")
     print("  [+] Memory MCP (persistent knowledge graph)")
-
-    # --- Instacart MCP (groceries) ---
-    if INSTACART_API_KEY:
-        servers["instacart"] = {
-            "type": "http",
-            "url": "https://mcp.instacart.com/mcp",
-            "headers": {"Authorization": f"Bearer {INSTACART_API_KEY}"},
-        }
-        allowed.append("mcp__instacart__*")
-        print("  [+] Instacart MCP (grocery shopping)")
-    else:
-        print("  [-] Instacart MCP - SKIPPED (set INSTACART_API_KEY)")
 
     return servers, allowed
 

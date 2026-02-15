@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
-    from pymongo import MongoClient
+    from pymongo.mongo_client import MongoClient
+    from pymongo.server_api import ServerApi
 except ImportError:
     print("ERROR: pymongo is not installed. Run: uv sync")
     sys.exit(1)
@@ -28,7 +29,7 @@ if not uri:
 
 
 def seed():
-    client = MongoClient(uri)
+    client = MongoClient(uri, server_api=ServerApi("1"))
     db = client["elder_care"]
 
     print("Connected to MongoDB.")
