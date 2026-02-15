@@ -19,8 +19,10 @@ interface Message {
     role: "user" | "assistant";
     text: string;
     timestamp: string;
-    /** Optional cards from the backend (ride options, medications, contacts, bills). */
+    /** Optional cards from the backend (ride options, medications, contacts, bills, weather, meetings). */
     cards?: ResponseCard[];
+    /** When set, show a "Watch live" button to open Browserbase session live view. */
+    liveViewUrl?: string;
 }
 
 // ---------- Typing dots ----------
@@ -234,6 +236,7 @@ export default function ConversationScreen() {
             text: result.response,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             ...(result.cards && result.cards.length > 0 && { cards: result.cards }),
+            ...(result.liveViewUrl && { liveViewUrl: result.liveViewUrl }),
           };
           setMessages((prev) => [...prev, assistantMsg]);
 
@@ -321,6 +324,51 @@ export default function ConversationScreen() {
   }, [navigation, currentSound, messages]);
 
   // ---------- Render ----------
+
+  const renderCard = (card: ResponseCard) => {
+    if (card.type === "ride_options" && card.data) {
+      const pickup = card.data.pickup as string | undefined;
+      const destination = card.data.destination as string | undefined;
+      const prices = card.data.prices as string | undefined;
+      if (card.items && card.items.length > 0) {
+        return (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{card.title}</Text>
+            {pickup && <Text style={styles.cardMeta}>From: {pickup}</Text>}
+            {destination && <Text style={styles.cardMeta}>To: {destination}</Text>}
+            {card.items.map((row, idx) => (
+              <TouchableOpacity key={row.id ?? idx} style={styles.cardItem} activeOpacity={0.7}>
+                <Text style={styles.cardItemTitle}>{row.title}</Text>
+                {row.subtitle ? <Text style={styles.cardItemSubtitle}>{row.subtitle}</Text> : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        );
+      }
+      return (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{card.title}</Text>
+          {pickup && <Text style={styles.cardMeta}>From: {pickup}</Text>}
+          {destination && <Text style={styles.cardMeta}>To: {destination}</Text>}
+          {prices && <Text style={styles.cardBody}>{typeof prices === "string" ? prices : JSON.stringify(prices)}</Text>}
+        </View>
+      );
+    }
+    if (card.items && card.items.length > 0) {
+      return (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{card.title}</Text>
+          {card.items.map((row, idx) => (
+            <TouchableOpacity key={row.id ?? idx} style={styles.cardItem} activeOpacity={0.7}>
+              <Text style={styles.cardItemTitle}>{row.title}</Text>
+              {row.subtitle ? <Text style={styles.cardItemSubtitle}>{row.subtitle}</Text> : null}
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    }
+    return null;
+  };
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
@@ -521,6 +569,56 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "rgba(74,144,226,0.5)",
   },
+    // Cards (tool result data)
+    cardsContainer: {
+        marginTop: 8,
+        width: "85%",
+        alignSelf: "flex-end",
+    },
+    card: {
+        backgroundColor: Colors.glassWhite,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: Colors.glassBorder,
+        overflow: "hidden",
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: Colors.gray700,
+        marginBottom: 8,
+    },
+    cardMeta: {
+        fontSize: 14,
+        color: Colors.gray600,
+        marginBottom: 4,
+    },
+    cardBody: {
+        fontSize: 14,
+        color: Colors.gray700,
+        lineHeight: 22,
+        marginTop: 6,
+    },
+    cardItem: {
+        backgroundColor: "rgba(255,255,255,0.8)",
+        borderRadius: 12,
+        padding: 12,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "rgba(0,0,0,0.06)",
+    },
+    cardItemTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: Colors.gray800,
+    },
+    cardItemSubtitle: {
+        fontSize: 14,
+        color: Colors.gray500,
+        marginTop: 2,
+    },
 
   // Bottom controls
   bottomControls: {
