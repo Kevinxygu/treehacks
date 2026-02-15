@@ -22,14 +22,17 @@ import {
   Activity,
   X,
   RefreshCw,
-  Loader2
+  Loader2,
+  Moon,
+  Zap,
+  FileText,
+  RefreshCw
 } from "lucide-react";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 const WORKFLOWS_URL =
   process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
-import { Moon, Zap, FileText } from "lucide-react";
 import Link from "next/link";
 import {
   AreaChart,
