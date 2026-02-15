@@ -23,48 +23,64 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const features = [
+const problemCards = [
   {
-    icon: Mic,
-    title: "Voice-Activated Assistant",
+    icon: Users,
+    title: "Tech Has Left Seniors Behind",
     description:
-      "Natural voice conversations that feel like talking to a caring friend. No complicated interfaces — just speak.",
-    color: "#5B9A8B",
-  },
-  {
-    icon: Brain,
-    title: "Cognitive Decline Detection",
-    description:
-      "Passive analysis of voice biomarkers detects early signs of cognitive decline through speech patterns and memory markers.",
-    color: "#7EC8B8",
-  },
-  {
-    icon: Activity,
-    title: "WHOOP Integration",
-    description:
-      "Combines voice analysis with wearable health data for holistic monitoring of sleep, activity, and recovery.",
-    color: "#9DC08B",
+      "Ever helped your grandparents with an iPad? What happens when they need to manage medicine or health records on vacation? Modern technology has become too complex for those who need it most.",
+    color: "#E8B298",
+    image: "/images/issue-1-graphic.png",
   },
   {
     icon: Heart,
-    title: "Reminiscence Therapy",
-    description:
-      "Personalized photo and memory-based conversations that strengthen neural pathways and prevent loneliness.",
-    color: "#E8B298",
+    title: "Loneliness Fuels Dementia",
+    description: "Loneliness increases dementia risk by 50%. Limited social interactions contribute to cognitive decline, which is painful for patients, families, and caregivers alike.",
+    color: "#8B9DC0",
+    image: "/images/issue-2-graphic.png",
   },
   {
-    icon: Shield,
-    title: "Doctor-Prescribed Interventions",
+    icon: Activity,
+    title: "Aging Population Crisis",
     description:
-      "Evidence-based intervention plans designed by healthcare professionals to slow or reverse cognitive decline.",
-    color: "#8B9DC0",
+      "By 2030, one in six people worldwide will be over 65 and this will double by 2050. Healthcare systems urgently need innovative solutions to support this demographic shift.",
+    color: "#9DC08B",
+    image: "/images/issue-3-graphic.png",
+  },
+];
+
+const solutionFeatures = [
+  {
+    icon: Mic,
+    title: "Voice-First Task Management",
+    description:
+      "Handle tasks naturally: 'Help me view my vaccine history' or 'Order my medicine refill.' No apps to learn, no buttons to press — just conversation.",
+    color: "#5B9A8B",
+    image: "/images/solution-1-graphic.png",
+  },
+  {
+    icon: Brain,
+    title: "Passive Biomarker Detection",
+    description:
+      "AI analyzes speech for early warning signs: reduced vocabulary range, word-finding pauses (like forgetting 'refrigerator'), and changes in speech patterns.",
+    color: "#7EC8B8",
+    image: "/images/solution-2-graphic.png",
+  },
+  {
+    icon: Stethoscope,
+    title: "Clinical AI Analysis",
+    description:
+      "Our AI agent interprets symptoms using clinical data from OpenEvidence. 'Help me check in on my health' provides deep, personalized health insights.",
+    color: "#5B9A8B",
+    image: "/images/solution-3-graphic.png",
   },
   {
     icon: BarChart3,
-    title: "Caretaker Dashboard",
+    title: "Empowering Healthcare Providers",
     description:
-      "Real-time monitoring dashboard for family members and healthcare providers with exportable reports.",
-    color: "#5B9A8B",
+      "Real-time dashboards and exportable reports give doctors and families the resources they need to support the growing elderly population.",
+    color: "#8B9DC0",
+    image: "/images/solution-4-graphic.png",
   },
 ];
 
@@ -77,28 +93,28 @@ const stats = [
 
 const researchPoints = [
   {
-    title: "Voice Biomarkers for Early Detection",
-    source: "Journal of Alzheimer's Disease, 2024",
+    title: "Redefining Elderly Care with Agentic AI",
+    source: "Khalil, Adhmad, & Ali, 2025",
     finding:
-      "Speech pattern analysis can detect cognitive decline up to 5 years before clinical diagnosis through markers like word-finding pauses, vocabulary diversity, and sentence complexity.",
+      "Agentic AI provides critical solutions to the global aging crisis by enabling personalized companionship, health monitoring, and predictive care, directly addressing workforce shortages and reducing social isolation.",
   },
   {
-    title: "Social Isolation Accelerates Decline",
+    title: "Loneliness as a Dementia Risk Factor",
     source: "The Lancet Commission, 2024",
     finding:
-      "Social isolation is identified as one of 14 modifiable risk factors for dementia. Regular social interaction — even with AI companions — shows measurable cognitive benefits.",
+      "Social isolation increases dementia risk by 50% and is one of 14 modifiable risk factors. Regular social interaction — even with AI companions — shows measurable cognitive benefits.",
   },
   {
-    title: "Multimodal Health Monitoring",
-    source: "Nature Digital Medicine, 2024",
+    title: "Voice Biomarkers Detect Decline Early",
+    source: "Journal of Alzheimer's Disease, 2024",
     finding:
-      "Combining wearable sensor data (sleep, HRV, activity) with cognitive assessments improves prediction accuracy of MCI progression by 40% over single-modality approaches.",
+      "Speech analysis detects cognitive decline 3-5 years before clinical diagnosis through markers like word-finding pauses, reduced vocabulary diversity, and sentence complexity changes.",
   },
   {
-    title: "Reminiscence Therapy Efficacy",
-    source: "Cochrane Systematic Review, 2023",
+    title: "Global Aging Population Surge",
+    source: "United Nations Population Report, 2024",
     finding:
-      "Structured reminiscence therapy shows significant improvements in mood, cognitive function, and quality of life for individuals with mild to moderate cognitive impairment.",
+      "By 2030, one in six people worldwide will be over 65, with this number doubling by 2050. Healthcare systems face urgent pressure to develop innovative elderly care solutions.",
   },
 ];
 
@@ -152,16 +168,15 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2D3B36] leading-[1.1] mb-5 tracking-tight">
-                Care that{" "}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#2D3B36] leading-[1.1] mb-5 tracking-tight">
+                Senior care that{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B9A8B] to-[#7EC8B8]">
                   listens
                 </span>
               </h1>
 
               <p className="text-base md:text-lg text-[#6B7C74] leading-relaxed mb-10">
-                An AI voice companion that detects cognitive decline early,
-                provides meaningful companionship, and keeps families connected.
+                While apps got more complicated, seniors got left behind. We're fixing that with a voice-based AI caretaker that completes your chores and prevents cognitive decline.
               </p>
 
               <div className="flex items-center gap-4 flex-wrap">
@@ -197,65 +212,160 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-12 md:px-16 lg:px-24">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
-          >
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center bg-white rounded-2xl p-6 border border-[#E5EBE8] shadow-sm">
-                <p className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-[#6B7C74]">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div {...fadeUp} className="text-center mb-16">
+      {/* The Problem */}
+      <section id="problem" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
-              Everything your loved one needs
+              The Problem
             </h2>
             <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
-              A comprehensive platform combining voice AI, wearable data, and
-              clinical research to support aging with dignity.
+              Technology has advanced rapidly, but it's left our most vulnerable population behind.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((feature, i) => (
+          <div className="space-y-24">
+            {problemCards.map((problem, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`flex flex-col ${i % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 md:gap-24`}
               >
-                <Card className="border border-[#E5EBE8] shadow-sm hover:shadow-md hover:border-[#D5DDD9] transition-all bg-white group h-full">
-                  <CardContent className="p-6">
+                {/* Text Side */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center mb-6">
                     <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                      style={{ backgroundColor: `${feature.color}12` }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: `${problem.color}15` }}
+                    >
+                      <problem.icon
+                        className="w-6 h-6"
+                        style={{ color: problem.color }}
+                      />
+                    </div>
+                  </div>
+
+                  <h3 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-6 leading-tight">
+                    {problem.title}
+                  </h3>
+                  <p className="text-lg text-[#6B7C74] leading-relaxed">
+                    {problem.description}
+                  </p>
+                </div>
+
+                {/* Image Side */}
+                <div className="flex-1 w-full flex justify-center items-center">
+                  <Image
+                    src={problem.image}
+                    alt={problem.title}
+                    width={600}
+                    height={400}
+                    className="w-full max-w-[500px] h-auto"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Solution */}
+      <section id="solution" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-24">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
+              Our Solution
+            </h2>
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
+              A conversational AI caretaker that's as easy as talking to a friend.
+            </p>
+          </motion.div>
+
+          <div className="space-y-32">
+            {solutionFeatures.map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-24`}
+              >
+                {/* Text Side */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center mb-6">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: `${feature.color}15` }}
                     >
                       <feature.icon
-                        className="w-5 h-5"
+                        className="w-6 h-6"
                         style={{ color: feature.color }}
                       />
                     </div>
+                  </div>
+
+                  <h3 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-6 leading-tight">
+                    {feature.title}
+                  </h3>
+                  <p className="text-lg text-[#6B7C74] leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+
+                {/* Image Side */}
+                <div className="flex-1 w-full flex justify-center items-center">
+                  <Image
+                    src={feature.image || ""}
+                    alt={feature.title}
+                    width={600}
+                    height={400}
+                    className="w-full max-w-[500px] h-auto"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Research */}
+      <section id="research" className="py-28 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
+              Why This Matters
+            </h2>
+            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
+              The science behind our approach and the urgency of the problem.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {researchPoints.map((point, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <Card className="border border-[#E5EBE8] shadow-sm bg-[#FAFCFB] h-full">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FileText className="w-4 h-4 text-[#5B9A8B]" />
+                      <span className="text-xs font-medium text-[#5B9A8B]">
+                        {point.source}
+                      </span>
+                    </div>
                     <h3 className="text-base font-semibold text-[#2D3B36] mb-2">
-                      {feature.title}
+                      {point.title}
                     </h3>
                     <p className="text-sm text-[#6B7C74] leading-relaxed">
-                      {feature.description}
+                      {point.finding}
                     </p>
                   </CardContent>
                 </Card>
@@ -326,47 +436,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Research */}
-      <section id="research" className="py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div {...fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-4 tracking-tight">
-              Built on research
-            </h2>
-            <p className="text-lg text-[#6B7C74] max-w-2xl mx-auto">
-              Our approach is grounded in peer-reviewed clinical research and
-              the latest advances in digital health.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {researchPoints.map((point, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <Card className="border border-[#E5EBE8] shadow-sm bg-[#FAFCFB] h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FileText className="w-4 h-4 text-[#5B9A8B]" />
-                      <span className="text-xs font-medium text-[#5B9A8B]">
-                        {point.source}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-semibold text-[#2D3B36] mb-2">
-                      {point.title}
-                    </h3>
-                    <p className="text-sm text-[#6B7C74] leading-relaxed">
-                      {point.finding}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
+      {/* Stats */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-12 md:px-16 lg:px-24">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+          >
+            {stats.map((stat, i) => (
+              <div key={i} className="text-center bg-white rounded-2xl p-6 border border-[#E5EBE8] shadow-sm">
+                <p className="text-3xl md:text-4xl font-bold text-[#2D3B36] mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-[#6B7C74]">{stat.label}</p>
+              </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
