@@ -12,6 +12,7 @@
     "dependencies": {
         "@ai-sdk/anthropic": "^1",
         "@ai-sdk/openai": "^1",
+        "@browserbasehq/sdk": "^2.6.0",
         "@browserbasehq/stagehand": "^3.0.8",
         "@types/multer": "^2.0.0",
         "ai": "^4",

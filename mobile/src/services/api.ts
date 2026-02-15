@@ -14,10 +14,27 @@ const FASTAPI_BASE = __DEV__
 
 // ---------- Types ----------
 
+export interface CardItem {
+    id?: string;
+    title: string;
+    subtitle?: string;
+    [key: string]: unknown;
+}
+
+export interface ResponseCard {
+    type: "ride_options" | "medications" | "contacts" | "bills";
+    title: string;
+    items?: CardItem[];
+    data?: Record<string, unknown>;
+}
+
 export interface VoiceChatResult {
     transcript: string;
     response: string;
     audioBase64: string | null;
+    cards?: ResponseCard[];
+    /** Browserbase session live view URL — when present, user can watch the browser session. */
+    liveViewUrl?: string;
 }
 
 export interface ChatMessage {
