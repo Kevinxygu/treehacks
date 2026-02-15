@@ -11,6 +11,7 @@ import {
   User,
   ChevronRight,
   Settings,
+  LayoutGrid,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/cognitive", icon: Brain, label: "Cognitive Health" },
   { href: "/dashboard/transcript", icon: MessageSquareText, label: "Transcripts" },
+  { href: "/canvas", icon: LayoutGrid, label: "Canvas" },
 ];
 
 export default function DashboardLayout({
