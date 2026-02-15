@@ -9,7 +9,11 @@ import ConfirmationScreen from "../screens/ConfirmationScreen";
 export type RootStackParamList = {
   Home: undefined;
   Conversation: undefined;
-  Confirmation: { summary?: string };
+  Confirmation: {
+    summary?: string;
+    riskScore?: number;
+    analysisSummary?: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

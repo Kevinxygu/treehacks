@@ -40,6 +40,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  fetchAllSessions,
+  fetchWhoopRecovery,
+  fetchWhoopSleep,
+  fetchWhoopCycle,
+  type SessionEntry,
+} from "@/lib/api";
 
 function getWhoopColor(val: number) {
   if (val >= 65) return "#7EC8B8";
@@ -156,65 +163,6 @@ const activityData = [
   { day: "Fri", steps: 4500 },
   { day: "Sat", steps: 2100 },
   { day: "Sun", steps: 3400 },
-];
-
-const alerts = [
-  {
-    level: "warning",
-    title: "Increased word-finding pauses",
-    description: "5 instances detected in last conversation",
-    time: "2 hours ago",
-  },
-  {
-    level: "warning",
-    title: "Repeated questions",
-    description: "Same question asked 3 times in 4 minutes",
-    time: "2 hours ago",
-  },
-  {
-    level: "success",
-    title: "Medication taken on time",
-    description: "Morning medications confirmed at 8:32 AM",
-    time: "6 hours ago",
-  },
-];
-
-const recentConversations = [
-  {
-    id: 1,
-    time: "8:02 AM Today",
-    duration: "12 min",
-    summary: "Morning check-in, medication reminder, gentle stretches",
-    markers: 2,
-  },
-  {
-    id: 2,
-    time: "2:15 PM Yesterday",
-    duration: "8 min",
-    summary: "Asked about daughter Sarah's visit, discussed weekend plans",
-    markers: 1,
-  },
-  {
-    id: 3,
-    time: "7:45 PM Yesterday",
-    duration: "5 min",
-    summary: "Evening routine, sleep medication reminder",
-    markers: 0,
-  },
-  {
-    id: 4,
-    time: "9:00 AM Yesterday",
-    duration: "15 min",
-    summary: "Reminiscence therapy - looked at vacation photos from 2019",
-    markers: 0,
-  },
-  {
-    id: 5,
-    time: "3:30 PM 2 days ago",
-    duration: "6 min",
-    summary: "Medication refill request, insurance confirmation",
-    markers: 3,
-  },
 ];
 
 const upcomingEvents = [
@@ -419,6 +367,20 @@ export default function DashboardOverview() {
       setSyncLoading(false);
     }
   };
+
+  // Latest cognitive score
+  const latestCogScore = latestSession
+    ? Math.round(100 - (latestSession.analysis_result?.risk_score ?? 0))
+    : null;
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-500">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative max-w-7xl mx-auto space-y-6">

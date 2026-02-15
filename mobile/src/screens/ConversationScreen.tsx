@@ -8,7 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { Colors } from "../constants/colors";
-import { voiceChat, type ChatMessage } from "../services/api";
+import { voiceChat, analyzeTranscript, type ChatMessage } from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Conversation">;
 

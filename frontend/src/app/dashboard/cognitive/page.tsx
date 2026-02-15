@@ -16,124 +16,12 @@ import {
   BarChart3,
   Lightbulb,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PreventativeCareRecommendations } from "@/components/PreventativeCareRecommendations";
-
-// --- Session Results Data ---
-const sessionResults = {
-  ai_summary:
-    '# Cognitive Health Check-In Report\n**Session 5 | February 14, 2026**\n\n---\n\n## 1. Overview\n\nGreat news! This conversation shows **excellent cognitive health markers** with a very low risk score of just 3.3 out of 100. Your loved one\'s speech patterns demonstrate strong verbal abilities, clear thinking, and healthy communication skills. The conversation flowed naturally with good vocabulary variety, minimal hesitations, and no concerning signs of word-finding difficulties or confusion.\n\n---\n\n## 2. Areas of Concern\n\n**No concerns detected in this session.** \n\nAll markers fell well within healthy ranges, and nothing was flagged by the screening system. This is exactly what we want to see!\n\n---\n\n## 3. Positive Signs\n\nYour loved one\'s conversation shows several **strong indicators of cognitive health**:\n\n- **Excellent vocabulary richness** \u2013 With a type-token ratio of 0.70 (well above the 0.40 threshold), they\'re using a diverse range of words rather than repeating the same ones. This shows good access to their mental "word bank" and reflects healthy language processing.\n\n- **Clear, confident speech** \u2013 Zero filler words (like "um" or "uh") and no hedge phrases (like "you know" or "kind of") suggest they\'re speaking with confidence and clarity, without searching for words.\n\n- **Smooth conversational flow** \u2013 Very low pause rate (0.018, well below the 0.03 threshold) indicates thoughts are flowing naturally without unusual gaps or struggles to find words.\n\n- **Specific and precise language** \u2013 Very low pronoun usage (10.7%, much lower than the 25% concern threshold) means they\'re using specific names and terms rather than vague words like "thing" or "stuff."\n\n- **No repetitions** \u2013 No repeated phrases or ideas, showing organized and forward-moving thinking.\n\n---\n\n## 4. Recommended Interventions\n\nEven with these excellent results, maintaining cognitive health is an ongoing journey. Here are **evidence-based activities** to continue protecting brain health:\n\n### **Physical Activity (Brain\'s Best Friend)**\n- **Walk together 3-4 times this week** for 20-30 minutes each time. Aim for a pace where you can still talk but feel slightly breathless. Aerobic exercise increases blood flow to the brain and promotes the growth of new brain cells, especially in memory centers.\n- Consider adding simple balance exercises (standing on one foot, heel-to-toe walking) which engage cognitive-motor connections.\n\n### **Social Engagement**\n- **Schedule 2-3 meaningful social interactions** this week \u2013 video calls with family, coffee with a friend, or joining a community group. Rich social connections are one of the strongest protectors against cognitive decline. Quality matters more than quantity.\n\n### **Cognitive Stimulation**\n- **Try a new learning activity together**: start a book club (discussing books engages multiple brain regions), learn 5 words in a new language, or teach each other something new. Novel challenges build "cognitive reserve."\n- Engage in **strategic games** like bridge, chess, Scrabble, or crossword puzzles 2-3 times weekly.\n\n### **Sleep Hygiene**\n- **Establish a consistent sleep schedule** (same bedtime/wake time daily). Aim for 7-8 hours. Deep sleep is when the brain clears out toxins, including proteins associated with cognitive decline.\n\n### **Mediterranean-Style Nutrition**\n- **Add one brain-healthy meal this week**: salmon with leafy greens, berries with walnuts, or olive oil-based dishes. Omega-3 fatty acids, antioxidants, and anti-inflammatory foods support brain cell health.\n\n---\n\n## 5. Daily Tips\n\n- **Morning Mindfulness** \u2013 Start each day with 5 minutes of deep breathing or meditation. This reduces stress hormones that can damage brain cells over time.\n\n- **Stay Hydrated** \u2013 Drink water throughout the day. Even mild dehydration affects concentration and memory. Keep a water bottle visible as a reminder.\n\n- **Evening Wind-Down Routine** \u2013 Spend 15-20 minutes before bed reading, doing gentle stretches, or journaling. Avoid screens to protect sleep quality, which is crucial for memory consolidation.\n\n---\n\n## Looking Ahead\n\nThis screening shows your loved one is doing wonderfully. Continue with regular check-ins to track trends over time. Remember, these screenings are tools for early awareness, not medical diagnoses. If you ever notice sudden changes in memory, confusion, or personality, consult with a healthcare provider promptly.\n\n**You\'re doing a great job as a caregiver by staying proactive about cognitive health!**',
-  risk_score: 3.3,
-  rule_based_summary:
-    "No significant cognitive decline markers detected in this session. Risk score: 3.3/100.",
-  session_id: "5",
-  session_date: "02-14-2026",
-  rule_based: {
-    session_id: "5",
-    session_date: "02-14-2026",
-    total_words: 56,
-    unique_words: 39,
-    total_sentences: 3,
-    risk_score: 3.3,
-    summary:
-      "No significant cognitive decline markers detected in this session. Risk score: 3.3/100.",
-    flagged_excerpts: [] as string[],
-    markers: [
-      {
-        category: "lexical_diversity",
-        marker: "type_token_ratio",
-        value: 0.6964,
-        threshold: 0.4,
-        flagged: false,
-        severity: "normal",
-        evidence: ["TTR=0.696 (unique=39, total=56)"],
-      },
-      {
-        category: "anomia",
-        marker: "hedge_phrase_rate",
-        value: 0,
-        threshold: 0.02,
-        flagged: false,
-        severity: "normal",
-        evidence: [],
-      },
-      {
-        category: "disfluency",
-        marker: "filler_word_rate",
-        value: 0,
-        threshold: 0.08,
-        flagged: false,
-        severity: "normal",
-        evidence: [],
-      },
-      {
-        category: "pronoun_usage",
-        marker: "pronoun_ratio",
-        value: 0.1071,
-        threshold: 0.25,
-        flagged: false,
-        severity: "normal",
-        evidence: ["Pronouns: 6/56 words (10.7%)"],
-      },
-      {
-        category: "pronoun_usage",
-        marker: "generic_pronoun_ratio",
-        value: 0,
-        threshold: 0.1,
-        flagged: false,
-        severity: "normal",
-        evidence: ["Generic pronouns (it/this/that/thing/stuff): 0/56 (0.0%)"],
-      },
-      {
-        category: "pause_patterns",
-        marker: "pause_rate",
-        value: 0.0179,
-        threshold: 0.03,
-        flagged: false,
-        severity: "mild",
-        evidence: [
-          "...en pick up the prescription from 5th and... i don't remember the exact street but w...",
-        ],
-      },
-      {
-        category: "repetition",
-        marker: "within_session_repetitions",
-        value: 0,
-        threshold: 1,
-        flagged: false,
-        severity: "normal",
-        evidence: [],
-      },
-    ],
-    raw_metrics: {
-      ttr: 0.6964,
-      mattr: 0.7057,
-      unique_words: 39,
-      total_words: 56,
-      hapax_legomena: 28,
-      hapax_ratio: 0.5,
-      hedge_phrase_count: 0,
-      hedge_phrase_rate: 0,
-      trailing_sentences: 0,
-      anomia_indicators: 0,
-      filler_count: 0,
-      filler_rate: 0,
-      false_starts: 0,
-      immediate_word_repetitions: 0,
-      total_disfluencies: 0,
-      pronoun_count: 6,
-      pronoun_ratio: 0.1071,
-      generic_pronoun_count: 0,
-      generic_pronoun_ratio: 0,
-      pause_count: 1,
-      pause_rate: 0.0179,
-      within_session_repetitions: 0,
-      repeated_pairs: [] as string[],
-    },
-  },
-};
+import { fetchLatestSession } from "@/lib/api";
 
 // --- Helpers ---
 
@@ -270,10 +158,47 @@ const RAW_METRIC_GROUPS: { label: string; metrics: { key: string; label: string;
 export default function CognitiveAnalysisPage() {
   const [showRawMetrics, setShowRawMetrics] = useState(false);
   const [showFullReport, setShowFullReport] = useState(false);
+  const [sessionResults, setSessionResults] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const session = await fetchLatestSession();
+        if (session?.analysis_result) {
+          setSessionResults(session.analysis_result);
+        }
+      } catch (err) {
+        console.error("Failed to fetch session:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <span className="ml-3 text-gray-500">Loading analysis...</span>
+      </div>
+    );
+  }
+
+  if (!sessionResults) {
+    return (
+      <div className="max-w-7xl mx-auto text-center py-20">
+        <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">No Analysis Available</h2>
+        <p className="text-gray-500">Start a conversation on the mobile app to generate a cognitive analysis.</p>
+      </div>
+    );
+  }
 
   const data = sessionResults;
   const risk = getRiskColor(data.risk_score);
-  const flaggedCount = data.rule_based.markers.filter((m) => m.flagged).length;
+  const flaggedCount = data.rule_based.markers.filter((m: any) => m.flagged).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -397,7 +322,7 @@ export default function CognitiveAnalysisPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.rule_based.markers.map((marker, i) => {
+            {data.rule_based.markers.map((marker: any, i: number) => {
               const severity = getSeverityColor(marker.severity, marker.flagged);
               const Icon = CATEGORY_ICONS[marker.category] || Brain;
               const progressPct = getProgressPercent(marker.marker, marker.value, marker.threshold);
@@ -466,7 +391,7 @@ export default function CognitiveAnalysisPage() {
                   {/* Evidence */}
                   {marker.evidence.length > 0 && (
                     <div className="mt-3 pt-2 border-t border-gray-200/50">
-                      {marker.evidence.map((ev, j) => (
+                      {marker.evidence.map((ev: string, j: number) => (
                         <p key={j} className="text-xs text-gray-500 italic">
                           {ev}
                         </p>
