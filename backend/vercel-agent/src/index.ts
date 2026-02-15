@@ -32,7 +32,7 @@ async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<s
     formData.append("model_id", "scribe_v2");
     formData.append("language_code", "en");
     formData.append("tag_audio_events", "false");
-    formData.append("file", new Blob([audioBuffer]), filename);
+    formData.append("file", new Blob([new Uint8Array(audioBuffer)]), filename);
 
     const res = await fetch(`${ELEVENLABS_BASE}/speech-to-text`, {
         method: "POST",
@@ -205,7 +205,7 @@ app.post("/api/chat", async (req, res) => {
             },
         });
 
-        result.pipeUIMessageStreamToResponse(res);
+        result.pipeDataStreamToResponse(res);
     } catch (err: any) {
         console.error("Chat error:", err);
         res.status(500).json({ error: err.message });

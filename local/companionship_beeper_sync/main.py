@@ -14,7 +14,7 @@ from beeper_client import list_messages, download_attachment, read_local_file
 POLL_INTERVAL_SEC = int(os.environ.get("BEEPER_POLL_INTERVAL_SEC", "5"))
 DELAY_AFTER_UPLOAD_SEC = int(os.environ.get("DELAY_AFTER_UPLOAD_SEC", "5"))
 FAMILY_ID = os.environ.get("FAMILY_ID", "default")
-BACKEND_URL = os.environ.get("BACKEND_URL", "")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://treehacks-backend-pi.vercel.app")
 PRESIGN_PATH = "/companionship/get-upload-presign"
 SYNC_STARTED_PATH = "/companionship/sync-started"
 SYNC_FINISHED_PATH = "/companionship/sync-finished"

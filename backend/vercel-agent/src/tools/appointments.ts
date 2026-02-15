@@ -55,8 +55,9 @@ async function getMyEventTypes(): Promise<any[]> {
     });
     if (!res.ok) throw new Error(`Cal.com event-types error: ${res.status}`);
     const data = await res.json();
-    _eventTypesCache = data.data ?? [];
-    return _eventTypesCache;
+    const list = Array.isArray(data.data) ? data.data : [];
+    _eventTypesCache = list;
+    return list;
 }
 
 /** Find event type by duration (in minutes) */
