@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Brain,
   Footprints,
@@ -19,10 +22,16 @@ import {
   Zap,
   Moon,
   Battery,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const WORKFLOWS_URL =
+  process.env.NEXT_PUBLIC_WORKFLOWS_URL || "http://localhost:3000";
 import {
   AreaChart,
   Area,
@@ -231,7 +240,9 @@ function MetricCard({
             </div>
             <span className="text-sm font-medium text-gray-500">{title}</span>
           </div>
-          <div className={`flex items-center gap-1 text-xs font-medium ${trendColors[trend]}`}>
+          <div
+            className={`flex items-center gap-1 text-xs font-medium ${trendColors[trend]}`}
+          >
             {trend === "up" ? (
               <TrendingUp className="w-3 h-3" />
             ) : trend === "down" ? (
@@ -253,6 +264,43 @@ function MetricCard({
 }
 
 export default function DashboardOverview() {
+  const searchParams = useSearchParams();
+  const [whoopConnected, setWhoopConnected] = useState<boolean | null>(null);
+  const [whoopLoading, setWhoopLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/whoop/status`)
+      .then((r) => r.json())
+      .then((d) => setWhoopConnected(d.connected))
+      .catch(() => setWhoopConnected(false));
+  }, [searchParams.get("whoop")]);
+
+  const connectWhoop = async () => {
+    setWhoopLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/whoop/auth-url`);
+      const { authUrl } = await res.json();
+      if (authUrl) window.location.href = authUrl;
+    } finally {
+      setWhoopLoading(false);
+    }
+  };
+
+  const [syncLoading, setSyncLoading] = useState(false);
+  const syncWhoop = async () => {
+    setSyncLoading(true);
+    try {
+      const res = await fetch(`${WORKFLOWS_URL}/api/sync-health`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ elderId: "margaret" }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   const [whoopData] = useState({
     sleep: 85,
     recovery: 72,
@@ -261,6 +309,55 @@ export default function DashboardOverview() {
   });
 
   return (
+    <div className="relative max-w-7xl mx-auto space-y-6">
+      <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
+        {whoopConnected === null ? (
+          <>
+            <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse shrink-0" />
+            <span className="text-xs text-gray-500">Whoop</span>
+          </>
+        ) : whoopConnected ? (
+          <>
+            <div
+              className="w-3 h-3 rounded-full bg-alert-green shrink-0"
+              style={{
+                boxShadow: "0 0 8px 2px rgba(126, 200, 184, 0.8), 0 0 16px 4px rgba(126, 200, 184, 0.4)",
+              }}
+            />
+            <span className="text-xs text-gray-500">Whoop</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={syncWhoop}
+              disabled={syncLoading}
+              className="h-7 px-2 text-xs gap-1 text-gray-600 hover:text-gray-900"
+            >
+              <RefreshCw
+                className={`w-3 h-3 ${syncLoading ? "animate-spin" : ""}`}
+              />
+              Sync
+            </Button>
+          </>
+        ) : (
+          <button
+            onClick={connectWhoop}
+            disabled={whoopLoading}
+            className="flex items-center gap-2"
+            title="Connect WHOOP"
+          >
+            <div
+              className="w-3 h-3 rounded-full bg-alert-red shrink-0"
+              style={{
+                boxShadow: "0 0 8px 2px rgba(217, 123, 123, 0.8), 0 0 16px 4px rgba(217, 123, 123, 0.4)",
+              }}
+            />
+            <span className="text-xs text-gray-500 hover:text-gray-700">
+              Whoop
+            </span>
+          </button>
+        )}
+      </div>
+
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Whoop Data Section - Front and Center */}
       <Card className="border-0 shadow-sm bg-white overflow-hidden">

@@ -15,8 +15,11 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 API_BASE = "https://api.prod.whoop.com/developer"
-REDIRECT_URI = "http://127.0.0.1:8765/callback"
 SCOPES = "read:sleep read:cycles read:recovery offline"
+
+BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+REDIRECT_URI = f"{BACKEND_BASE_URL}/whoop/callback"
+OAUTH_STATES: dict[str, bool] = {}
 
 CLIENT_ID = os.environ["WHOOP_CLIENT_ID"]
 CLIENT_SECRET = os.environ["WHOOP_CLIENT_SECRET"]
@@ -60,11 +63,14 @@ def refresh_access_token() -> tuple[str, str]:
     return data["access_token"], new_refresh
 
 
+LOCAL_REDIRECT_URI = "http://127.0.0.1:8765/callback"
+
+
 def run_oauth_flow() -> str:
     state = "".join(random.choices(string.ascii_letters + string.digits, k=8))
     params = {
         "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": LOCAL_REDIRECT_URI,
         "response_type": "code",
         "scope": SCOPES,
         "state": state,
@@ -105,7 +111,7 @@ def run_oauth_flow() -> str:
             "code": code,
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
-            "redirect_uri": REDIRECT_URI,
+            "redirect_uri": LOCAL_REDIRECT_URI,
         },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
@@ -116,6 +122,45 @@ def run_oauth_flow() -> str:
         _set_refresh_token(new_refresh)
         print("Refresh token saved to", REFRESH_TOKEN_FILE)
     return data["access_token"]
+
+
+def get_auth_url() -> str:
+    state = "".join(random.choices(string.ascii_letters + string.digits, k=12))
+    OAUTH_STATES[state] = True
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code",
+        "scope": SCOPES,
+        "state": state,
+    }
+    return f"{AUTH_URL}?{urlencode(params)}"
+
+
+def exchange_code_for_token(code: str, state: str) -> None:
+    if state not in OAUTH_STATES:
+        raise ValueError("invalid or expired state")
+    del OAUTH_STATES[state]
+    resp = requests.post(
+        TOKEN_URL,
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "redirect_uri": REDIRECT_URI,
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    new_refresh = data.get("refresh_token")
+    if new_refresh:
+        _set_refresh_token(new_refresh)
+
+
+def is_whoop_connected() -> bool:
+    return _get_refresh_token() is not None
 
 
 def get_access_token() -> str:

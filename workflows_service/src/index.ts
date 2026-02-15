@@ -4,6 +4,13 @@ import { syncElderHealthData } from "../workflows/sync-whoop.js";
 
 const app = express();
 app.use(express.json());
+app.use((_req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "http://localhost:3001");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (_req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
 
 app.post("/api/sync-health", async (req, res) => {
   const { elderId } = req.body;

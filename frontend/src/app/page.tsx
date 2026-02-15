@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -12,6 +14,8 @@ import {
   Stethoscope,
   Users,
   FileText,
+  Zap,
+  LogIn,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -121,6 +125,18 @@ const fadeUp = {
 };
 
 export default function LandingPage() {
+  const router = useRouter();
+  const [showLogin, setShowLogin] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // accepts any login for now
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowLogin(false);
+    router.push("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-[#FAFCFB]">
       {/* Navigation */}
@@ -144,8 +160,40 @@ export default function LandingPage() {
             </a>
           </div>
           <div className="flex items-center gap-3">
+            {showLogin ? (
+              <form onSubmit={handleLogin} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-[#E5EBE8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B9A8B]/30"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-[#E5EBE8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B9A8B]/30"
+                />
+                <Button type="submit" className="bg-[#5B9A8B] hover:bg-[#4A8577] text-white text-sm">
+                  Log in
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowLogin(false)}>
+                  Cancel
+                </Button>
+              </form>
+            ) : (
+              <Button
+                onClick={() => setShowLogin(true)}
+                className="bg-[#5B9A8B] hover:bg-[#4A8577] text-white text-sm gap-1.5"
+              >
+                <LogIn className="w-4 h-4" />
+                Login
+              </Button>
+            )}
             <Link href="/dashboard">
-              <Button className="bg-care-blue hover:bg-care-blue/90 text-white text-sm">
+              <Button variant="outline" className="text-sm border-[#E5EBE8]">
                 Dashboard
               </Button>
             </Link>
@@ -564,7 +612,7 @@ export default function LandingPage() {
       </section>
 
       {/* leave this out for now - TreeHacks 2026 */}
-      {/* 
+      {/*
       <section id="team" className="py-28 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div {...fadeUp} className="text-center mb-16">
