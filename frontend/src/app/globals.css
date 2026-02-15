@@ -9,6 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-pangolin: var(--font-pangolin);
+  --font-rubik-dirt: var(--font-rubik-dirt);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -221,4 +223,16 @@
 .smooth-scroll::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
+}
+
+.pangolin-regular {
+  font-family: var(--font-pangolin), "Pangolin", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.rubik-dirt-regular {
+  font-family: var(--font-rubik-dirt), "Rubik Dirt", system-ui;
+  font-weight: 400;
+  font-style: normal;
 }
